@@ -1,3 +1,32 @@
+server:
+  port: 8080
+
 spring:
   application:
     name: mentorlink-backend
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mentorlink
+    username: mentorlink
+    password: mentorlink
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+
+logging:
+  level:
+    org.springframework.security: INFO
+    org.hibernate.sql: INFO
