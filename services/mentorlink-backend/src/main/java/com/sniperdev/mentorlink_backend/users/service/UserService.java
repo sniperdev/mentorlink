@@ -1,7 +1,12 @@
-package com.sniperdev.mentorlink_backend.users;
+package com.sniperdev.mentorlink_backend.users.service;
 
 import com.sniperdev.mentorlink_backend.common.exception.ConflictException;
 import com.sniperdev.mentorlink_backend.common.exception.ResourceNotFoundException;
+import com.sniperdev.mentorlink_backend.users.dto.CreateUserRequest;
+import com.sniperdev.mentorlink_backend.users.dto.UserResponse;
+import com.sniperdev.mentorlink_backend.users.model.User;
+import com.sniperdev.mentorlink_backend.users.model.UserStatus;
+import com.sniperdev.mentorlink_backend.users.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

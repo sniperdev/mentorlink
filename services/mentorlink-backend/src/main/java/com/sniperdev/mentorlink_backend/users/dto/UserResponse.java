@@ -1,5 +1,7 @@
-package com.sniperdev.mentorlink_backend.users;
+package com.sniperdev.mentorlink_backend.users.dto;
 
+import com.sniperdev.mentorlink_backend.users.model.UserRole;
+import com.sniperdev.mentorlink_backend.users.model.UserStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

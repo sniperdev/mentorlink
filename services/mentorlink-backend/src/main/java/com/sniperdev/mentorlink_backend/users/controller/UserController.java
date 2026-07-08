@@ -1,5 +1,8 @@
-package com.sniperdev.mentorlink_backend.users;
+package com.sniperdev.mentorlink_backend.users.controller;
 
+import com.sniperdev.mentorlink_backend.users.dto.CreateUserRequest;
+import com.sniperdev.mentorlink_backend.users.dto.UserResponse;
+import com.sniperdev.mentorlink_backend.users.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

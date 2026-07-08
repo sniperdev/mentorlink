@@ -2,6 +2,12 @@ package com.sniperdev.mentorlink_backend.users;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import com.sniperdev.mentorlink_backend.users.controller.UserController;
+import com.sniperdev.mentorlink_backend.users.dto.CreateUserRequest;
+import com.sniperdev.mentorlink_backend.users.dto.UserResponse;
+import com.sniperdev.mentorlink_backend.users.model.UserRole;
+import com.sniperdev.mentorlink_backend.users.model.UserStatus;
+import com.sniperdev.mentorlink_backend.users.service.UserService;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
