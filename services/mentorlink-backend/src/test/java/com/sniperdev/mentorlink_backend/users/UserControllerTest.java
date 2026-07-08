@@ -13,7 +13,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -53,8 +53,8 @@ class UserControllerTest {
                 "test@test.com",
                 UserRole.STUDENT,
                 UserStatus.ACTIVE,
-                LocalDateTime.now(),
-                LocalDateTime.now()
+                Instant.now(),
+                Instant.now()
         );
 
 
@@ -92,8 +92,8 @@ class UserControllerTest {
                 "test@test.com",
                 UserRole.STUDENT,
                 UserStatus.ACTIVE,
-                LocalDateTime.now(),
-                LocalDateTime.now()
+                Instant.now(),
+                Instant.now()
         );
 
 
@@ -121,8 +121,8 @@ class UserControllerTest {
                 "test@test.com",
                 UserRole.STUDENT,
                 UserStatus.ACTIVE,
-                LocalDateTime.now(),
-                LocalDateTime.now()
+                Instant.now(),
+                Instant.now()
         );
 
 
