@@ -1,12 +1,12 @@
 server:
-  port: 8080
+  port: 8081
 
 spring:
   application:
     name: mentorlink-backend
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/tutor_db
+    url: jdbc:postgresql://localhost:5432/auth_db
     username: mentorlink
     password: mentorlink
     driver-class-name: org.postgresql.Driver
