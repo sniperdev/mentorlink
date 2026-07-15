@@ -35,6 +35,8 @@ class UserServiceTest {
         CreateUserRequest request = new CreateUserRequest(
                 "test@test.com",
                 "password123",
+                "test",
+                "test",
                 UserRole.STUDENT
         );
 
@@ -78,6 +80,8 @@ class UserServiceTest {
         CreateUserRequest request = new CreateUserRequest(
                 "test@test.com",
                 "password123",
+                "test",
+                "test",
                 UserRole.STUDENT
         );
 
@@ -109,6 +113,8 @@ class UserServiceTest {
         User user = User.builder()
                 .id(id)
                 .email("test@test.com")
+                .firstName("test")
+                .lastName("test")
                 .role(UserRole.STUDENT)
                 .status(UserStatus.ACTIVE)
                 .build();

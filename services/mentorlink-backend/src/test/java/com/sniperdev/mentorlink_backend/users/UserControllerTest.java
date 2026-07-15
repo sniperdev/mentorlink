@@ -50,6 +50,8 @@ class UserControllerTest {
         CreateUserRequest request = new CreateUserRequest(
                 "test@test.com",
                 "password123",
+                "test",
+                "test",
                 UserRole.STUDENT
         );
 
@@ -57,6 +59,8 @@ class UserControllerTest {
         UserResponse response = new UserResponse(
                 UUID.randomUUID(),
                 "test@test.com",
+                "test",
+                "test",
                 UserRole.STUDENT,
                 UserStatus.ACTIVE,
                 Instant.now(),
@@ -96,6 +100,8 @@ class UserControllerTest {
         UserResponse user = new UserResponse(
                 UUID.randomUUID(),
                 "test@test.com",
+                "test",
+                "test",
                 UserRole.STUDENT,
                 UserStatus.ACTIVE,
                 Instant.now(),
@@ -125,6 +131,8 @@ class UserControllerTest {
         UserResponse response = new UserResponse(
                 id,
                 "test@test.com",
+                "test",
+                "test",
                 UserRole.STUDENT,
                 UserStatus.ACTIVE,
                 Instant.now(),

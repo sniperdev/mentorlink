@@ -29,6 +29,8 @@ public class UserService {
         User user = User.builder()
                 .email(request.email())
                 .passwordHash(request.password())
+                .firstName(request.firstName())
+                .lastName(request.lastName())
                 .role(request.role())
                 .status(UserStatus.ACTIVE)
                 .build();
@@ -50,6 +52,6 @@ public class UserService {
     }
 
     private UserResponse mapToResponse(User user) {
-        return new UserResponse(user.getId(), user.getEmail(), user.getRole(), user.getStatus(), user.getCreatedAt(), user.getUpdatedAt());
+        return new UserResponse(user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getRole(), user.getStatus(), user.getCreatedAt(), user.getUpdatedAt());
     }
 }
