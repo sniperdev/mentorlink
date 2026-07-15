@@ -9,6 +9,7 @@ import com.sniperdev.mentorlink_backend.users.model.UserStatus;
 import com.sniperdev.mentorlink_backend.users.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +20,7 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    @Transactional
     public UserResponse createUser(CreateUserRequest request) {
         if (userRepository.existsByEmail(request.email())) {
             throw new ConflictException("Email already exists");
@@ -35,11 +37,13 @@ public class UserService {
         return mapToResponse(savedUser);
     }
 
+    @Transactional(readOnly = true)
     public List<UserResponse> getAllUsers() {
         List<User> users = userRepository.findAll();
         return users.stream().map(this::mapToResponse).toList();
     }
 
+    @Transactional(readOnly = true)
     public UserResponse getUserById(UUID id) {
         User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         return mapToResponse(user);
