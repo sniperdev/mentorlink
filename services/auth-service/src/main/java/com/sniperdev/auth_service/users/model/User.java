@@ -1,6 +1,6 @@
-package com.sniperdev.mentorlink_backend.users.model;
+package com.sniperdev.auth_service.users.model;
 
-import com.sniperdev.mentorlink_backend.common.audit.AuditableEntity;
+import com.sniperdev.auth_service.common.audit.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.*;
 

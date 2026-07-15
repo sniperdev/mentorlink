@@ -1,4 +1,4 @@
-package com.sniperdev.mentorlink_backend.users.model;
+package com.sniperdev.auth_service.users.model;
 
 public enum UserStatus {
     ACTIVE, INACTIVE, BLOCKED

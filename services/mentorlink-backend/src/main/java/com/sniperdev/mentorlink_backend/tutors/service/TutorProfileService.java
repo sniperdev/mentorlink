@@ -8,9 +8,6 @@ import com.sniperdev.mentorlink_backend.tutors.dto.TutorSummaryResponse;
 import com.sniperdev.mentorlink_backend.tutors.mapper.TutorProfileMapper;
 import com.sniperdev.mentorlink_backend.tutors.model.TutorProfile;
 import com.sniperdev.mentorlink_backend.tutors.repository.TutorProfileRepository;
-import com.sniperdev.mentorlink_backend.users.model.User;
-import com.sniperdev.mentorlink_backend.users.model.UserRole;
-import com.sniperdev.mentorlink_backend.users.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,23 +23,15 @@ public class TutorProfileService {
 
     private final TutorProfileMapper tutorProfileMapper;
 
-    private final UserRepository userRepository;
-
     @Transactional
     public TutorProfileResponse createTutorProfile(CreateTutorProfileRequest request) {
-        User user = userRepository.findById(request.userId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (user.getRole() != UserRole.TUTOR) {
-            throw new ConflictException("User is not a tutor");
-        }
-
-        if (tutorProfileRepository.existsByUserId(user.getId())) {
+        if (tutorProfileRepository.existsByUserId(request.userId())) {
             throw new ConflictException("Tutor profile already exists");
         }
 
         TutorProfile tutorProfile = TutorProfile.builder()
-                .user(user)
+                .userId(request.userId())
                 .bio(request.bio())
                 .build();
 
