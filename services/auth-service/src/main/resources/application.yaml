@@ -30,3 +30,6 @@ logging:
   level:
     org.springframework.security: INFO
     org.hibernate.sql: INFO
+jwt:
+  expiration: ${JWT_EXPIRATION:3600000}
+  secret: ${JWT_SECRET}

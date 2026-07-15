@@ -1,57 +1,44 @@
 package com.sniperdev.auth_service.users.service;
 
 import com.sniperdev.auth_service.common.exception.ConflictException;
-import com.sniperdev.auth_service.common.exception.ResourceNotFoundException;
-import com.sniperdev.auth_service.users.dto.CreateUserRequest;
-import com.sniperdev.auth_service.users.dto.UserResponse;
+import com.sniperdev.auth_service.common.exception.InvalidCredentialsException;
 import com.sniperdev.auth_service.users.model.User;
+import com.sniperdev.auth_service.users.model.UserRole;
 import com.sniperdev.auth_service.users.model.UserStatus;
 import com.sniperdev.auth_service.users.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
 
-    @Transactional
-    public UserResponse createUser(CreateUserRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
-            throw new ConflictException("Email already exists");
+    public User createUser(
+            String email,
+            String passwordHash,
+            String firstName,
+            String lastName,
+            UserRole role
+    ) {
+        if (userRepository.existsByEmail(email)) {
+            throw new ConflictException("User with this email already exists");
         }
 
         User user = User.builder()
-                .email(request.email())
-                .passwordHash(request.password())
-                .firstName(request.firstName())
-                .lastName(request.lastName())
-                .role(request.role())
+                .email(email)
+                .passwordHash(passwordHash)
+                .firstName(firstName)
+                .lastName(lastName)
+                .role(role)
                 .status(UserStatus.ACTIVE)
                 .build();
 
-        User savedUser = userRepository.save(user);
-        return mapToResponse(savedUser);
+        return userRepository.save(user);
     }
 
-    @Transactional(readOnly = true)
-    public List<UserResponse> getAllUsers() {
-        List<User> users = userRepository.findAll();
-        return users.stream().map(this::mapToResponse).toList();
-    }
-
-    @Transactional(readOnly = true)
-    public UserResponse getUserById(UUID id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
-        return mapToResponse(user);
-    }
-
-    private UserResponse mapToResponse(User user) {
-        return new UserResponse(user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getRole(), user.getStatus(), user.getCreatedAt(), user.getUpdatedAt());
+    public User getByEmail(String email) {
+        return userRepository.findByEmail(email).orElseThrow(InvalidCredentialsException::new);
     }
 }
