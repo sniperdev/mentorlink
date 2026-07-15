@@ -1,6 +1,6 @@
-package com.sniperdev.mentorlink_backend.users.repository;
+package com.sniperdev.auth_service.users.repository;
 
-import com.sniperdev.mentorlink_backend.users.model.User;
+import com.sniperdev.auth_service.users.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

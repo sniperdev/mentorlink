@@ -1,6 +1,6 @@
-package com.sniperdev.mentorlink_backend.users.dto;
+package com.sniperdev.auth_service.users.dto;
 
-import com.sniperdev.mentorlink_backend.users.model.UserRole;
+import com.sniperdev.auth_service.users.model.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

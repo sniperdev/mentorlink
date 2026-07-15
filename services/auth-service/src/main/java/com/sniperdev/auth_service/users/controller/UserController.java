@@ -1,8 +1,8 @@
-package com.sniperdev.mentorlink_backend.users.controller;
+package com.sniperdev.auth_service.users.controller;
 
-import com.sniperdev.mentorlink_backend.users.dto.CreateUserRequest;
-import com.sniperdev.mentorlink_backend.users.dto.UserResponse;
-import com.sniperdev.mentorlink_backend.users.service.UserService;
+import com.sniperdev.auth_service.users.dto.CreateUserRequest;
+import com.sniperdev.auth_service.users.dto.UserResponse;
+import com.sniperdev.auth_service.users.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

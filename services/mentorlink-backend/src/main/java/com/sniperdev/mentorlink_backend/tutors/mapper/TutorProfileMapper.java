@@ -11,7 +11,7 @@ public class TutorProfileMapper {
     public TutorProfileResponse toResponse(TutorProfile tutorProfile) {
         return new TutorProfileResponse(
                 tutorProfile.getId(),
-                tutorProfile.getUser().getId(),
+                tutorProfile.getUserId(),
                 tutorProfile.getBio(),
                 tutorProfile.isActive(),
                 tutorProfile.getCreatedAt(),
@@ -22,9 +22,7 @@ public class TutorProfileMapper {
     public TutorSummaryResponse toSummaryResponse(TutorProfile tutorProfile) {
         return new TutorSummaryResponse(
                 tutorProfile.getId(),
-                tutorProfile.getUser().getEmail(),
-                tutorProfile.getUser().getFirstName(),
-                tutorProfile.getUser().getLastName(),
+                tutorProfile.getUserId(),
                 tutorProfile.getBio()
         );
     }

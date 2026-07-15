@@ -1,7 +1,6 @@
 package com.sniperdev.mentorlink_backend.tutors.model;
 
 import com.sniperdev.mentorlink_backend.common.audit.AuditableEntity;
-import com.sniperdev.mentorlink_backend.users.model.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,9 +21,8 @@ public class TutorProfile extends AuditableEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
-    private User user;
+    @Column(name = "user_id", nullable = false, unique = true)
+    private UUID userId;
 
     @Column(columnDefinition = "TEXT")
     private String bio;
