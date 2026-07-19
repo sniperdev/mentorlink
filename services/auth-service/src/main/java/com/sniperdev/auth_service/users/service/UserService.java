@@ -9,6 +9,8 @@ import com.sniperdev.auth_service.users.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @AllArgsConstructor
 public class UserService {
@@ -40,5 +42,9 @@ public class UserService {
 
     public User getByEmail(String email) {
         return userRepository.findByEmail(email).orElseThrow(InvalidCredentialsException::new);
+    }
+
+    public User getUserById(UUID id) {
+        return userRepository.findById(id).orElseThrow(InvalidCredentialsException::new);
     }
 }
