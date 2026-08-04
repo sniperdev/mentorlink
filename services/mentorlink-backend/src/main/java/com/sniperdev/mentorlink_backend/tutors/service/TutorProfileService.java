@@ -2,6 +2,8 @@ package com.sniperdev.mentorlink_backend.tutors.service;
 
 import com.sniperdev.mentorlink_backend.common.exception.ConflictException;
 import com.sniperdev.mentorlink_backend.common.exception.ResourceNotFoundException;
+import com.sniperdev.mentorlink_backend.security.CurrentUser;
+import com.sniperdev.mentorlink_backend.security.CurrentUserProvider;
 import com.sniperdev.mentorlink_backend.tutors.dto.CreateTutorProfileRequest;
 import com.sniperdev.mentorlink_backend.tutors.dto.TutorProfileResponse;
 import com.sniperdev.mentorlink_backend.tutors.dto.TutorSummaryResponse;
@@ -20,18 +22,20 @@ import java.util.UUID;
 public class TutorProfileService {
 
     private final TutorProfileRepository tutorProfileRepository;
-
     private final TutorProfileMapper tutorProfileMapper;
+    private final CurrentUserProvider currentUserProvider;
 
     @Transactional
     public TutorProfileResponse createTutorProfile(CreateTutorProfileRequest request) {
+        CurrentUser currentUser = currentUserProvider.getCurrentUser();
 
-        if (tutorProfileRepository.existsByUserId(request.userId())) {
+        UUID userId = currentUser.id();
+        if (tutorProfileRepository.existsByUserId(userId)) {
             throw new ConflictException("Tutor profile already exists");
         }
 
         TutorProfile tutorProfile = TutorProfile.builder()
-                .userId(request.userId())
+                .userId(userId)
                 .bio(request.bio())
                 .build();
 

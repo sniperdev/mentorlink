@@ -7,7 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +20,7 @@ public class SubjectController {
 
     private final SubjectService subjectService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<SubjectResponse> createSubject(@Valid @RequestBody CreateSubjectRequest request) {
         SubjectResponse response = subjectService.createSubject(request);
@@ -36,10 +37,5 @@ public class SubjectController {
             @PathVariable UUID id
     ) {
         return ResponseEntity.ok(subjectService.getSubjectById(id));
-    }
-
-    @GetMapping("/me")
-    public Authentication me(Authentication authentication) {
-        return authentication;
     }
 }

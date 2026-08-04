@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,7 +23,8 @@ public class TutorProfileController {
     private final TutorProfileService tutorProfileService;
 
     @PostMapping("/profile")
-    public ResponseEntity<TutorProfileResponse> createTutorProfile (@Valid @RequestBody CreateTutorProfileRequest request) {
+    @PreAuthorize("hasRole('TUTOR')")
+    public ResponseEntity<TutorProfileResponse> createTutorProfile(@Valid @RequestBody CreateTutorProfileRequest request) {
         TutorProfileResponse response = tutorProfileService.createTutorProfile(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
