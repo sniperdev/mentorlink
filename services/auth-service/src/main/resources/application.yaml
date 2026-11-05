@@ -6,9 +6,9 @@ spring:
     name: mentorlink-backend
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/auth_db
-    username: mentorlink
-    password: mentorlink
+    url: ${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/auth_db}
+    username: ${DB_USERNAME:mentorlink}
+    password: ${DB_PASSWORD:mentorlink}
     driver-class-name: org.postgresql.Driver
 
   jpa:
