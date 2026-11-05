@@ -1,14 +1,16 @@
 package com.sniperdev.auth_service.auth.service;
 
-import com.sniperdev.auth_service.auth.dto.AuthenticationResponse;
 import com.sniperdev.auth_service.auth.dto.LoginRequest;
 import com.sniperdev.auth_service.auth.dto.RegisterRequest;
 import com.sniperdev.auth_service.auth.jwt.JwtService;
+import com.sniperdev.auth_service.auth.refresh.service.CookieService;
+import com.sniperdev.auth_service.auth.refresh.service.RefreshTokenService;
 import com.sniperdev.auth_service.common.exception.ConflictException;
 import com.sniperdev.auth_service.common.exception.InvalidCredentialsException;
 import com.sniperdev.auth_service.users.model.User;
 import com.sniperdev.auth_service.users.model.UserRole;
 import com.sniperdev.auth_service.users.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,7 +21,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.UUID;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -37,6 +38,15 @@ class AuthServiceTest {
 
     @Mock
     private JwtService jwtService;
+
+    @Mock
+    private RefreshTokenService refreshTokenService;
+
+    @Mock
+    private CookieService cookieService;
+
+    @Mock
+    private HttpServletResponse response;
 
     @InjectMocks
     private AuthService authService;
@@ -71,7 +81,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void shouldRegisterUserAndReturnToken() {
+    void shouldRegisterUserAndSetCookies() {
         when(passwordEncoder.encode(registerRequest.password()))
                 .thenReturn("hashedPassword");
 
@@ -85,10 +95,10 @@ class AuthServiceTest {
 
         when(jwtService.generateAccessToken(user))
                 .thenReturn("jwt-token");
+        when(refreshTokenService.createRefreshToken(user.getId()))
+                .thenReturn("refresh-token");
 
-        AuthenticationResponse response = authService.register(registerRequest);
-
-        assertThat(response.token()).isEqualTo("jwt-token");
+        authService.register(registerRequest, response);
 
         verify(passwordEncoder).encode(registerRequest.password());
 
@@ -101,6 +111,8 @@ class AuthServiceTest {
         );
 
         verify(jwtService).generateAccessToken(user);
+        verify(cookieService).addAccessTokenCookie(response, "jwt-token");
+        verify(cookieService).addRefreshTokenCookie(response, "refresh-token");
     }
 
     @Test
@@ -117,7 +129,7 @@ class AuthServiceTest {
         )).thenThrow(new ConflictException("User already exists"));
 
         assertThatThrownBy(() ->
-                authService.register(registerRequest))
+                authService.register(registerRequest, response))
                 .isInstanceOf(ConflictException.class)
                 .hasMessageContaining("User already exists");
 
@@ -125,7 +137,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void shouldLoginAndReturnToken() {
+    void shouldLoginAndSetCookies() {
 
         when(userService.getByEmail(loginRequest.email()))
                 .thenReturn(user);
@@ -137,18 +149,18 @@ class AuthServiceTest {
 
         when(jwtService.generateAccessToken(user))
                 .thenReturn("jwt-token");
+        when(refreshTokenService.createRefreshToken(user.getId()))
+                .thenReturn("refresh-token");
 
-        AuthenticationResponse response =
-                authService.login(loginRequest);
-
-        assertThat(response.token())
-                .isEqualTo("jwt-token");
+        authService.login(loginRequest, response);
 
         verify(passwordEncoder)
                 .matches(loginRequest.password(), user.getPasswordHash());
 
         verify(jwtService)
                 .generateAccessToken(user);
+        verify(cookieService).addAccessTokenCookie(response, "jwt-token");
+        verify(cookieService).addRefreshTokenCookie(response, "refresh-token");
     }
 
     @Test
@@ -161,7 +173,7 @@ class AuthServiceTest {
                 .thenReturn(false);
 
         assertThatThrownBy(() ->
-                authService.login(loginRequest))
+                authService.login(loginRequest, response))
                 .isInstanceOf(InvalidCredentialsException.class);
 
         verify(jwtService, never())
@@ -175,7 +187,7 @@ class AuthServiceTest {
                 .thenThrow(new InvalidCredentialsException());
 
         assertThatThrownBy(() ->
-                authService.login(loginRequest))
+                authService.login(loginRequest, response))
                 .isInstanceOf(InvalidCredentialsException.class);
 
         verify(passwordEncoder, never())

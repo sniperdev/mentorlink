@@ -41,7 +41,7 @@ class JwtServiceTest {
     @Test
     void shouldGenerateValidToken() {
         when(jwtProperties.secret()).thenReturn(SECRET_BASE64);
-        when(jwtProperties.expiration()).thenReturn(3600_000L);
+        when(jwtProperties.accessTokenExpiration()).thenReturn(3600_000L);
 
         String token = jwtService.generateAccessToken(user);
 
@@ -53,7 +53,7 @@ class JwtServiceTest {
     @Test
     void shouldExtractUserId() {
         when(jwtProperties.secret()).thenReturn(SECRET_BASE64);
-        when(jwtProperties.expiration()).thenReturn(3600_000L);
+        when(jwtProperties.accessTokenExpiration()).thenReturn(3600_000L);
 
         String token = jwtService.generateAccessToken(user);
 
@@ -63,7 +63,7 @@ class JwtServiceTest {
     @Test
     void shouldReturnTrueForValidToken() {
         when(jwtProperties.secret()).thenReturn(SECRET_BASE64);
-        when(jwtProperties.expiration()).thenReturn(3600_000L);
+        when(jwtProperties.accessTokenExpiration()).thenReturn(3600_000L);
 
         String token = jwtService.generateAccessToken(user);
 
@@ -75,7 +75,7 @@ class JwtServiceTest {
     @Test
     void shouldReturnFalseForExpiredToken() {
         when(jwtProperties.secret()).thenReturn(SECRET_BASE64);
-        when(jwtProperties.expiration()).thenReturn(-1_000L);
+        when(jwtProperties.accessTokenExpiration()).thenReturn(-1_000L);
 
         String token = jwtService.generateAccessToken(user);
 
@@ -87,7 +87,7 @@ class JwtServiceTest {
     @Test
     void shouldReturnFalseForInvalidToken() {
         when(jwtProperties.secret()).thenReturn(SECRET_BASE64);
-        when(jwtProperties.expiration()).thenReturn(3600_000L);
+        when(jwtProperties.accessTokenExpiration()).thenReturn(3600_000L);
 
         String token = jwtService.generateAccessToken(user);
 

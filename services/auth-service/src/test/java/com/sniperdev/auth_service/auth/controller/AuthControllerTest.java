@@ -1,12 +1,13 @@
 package com.sniperdev.auth_service.auth.controller;
 
-import com.sniperdev.auth_service.auth.dto.AuthenticationResponse;
 import com.sniperdev.auth_service.auth.dto.LoginRequest;
 import com.sniperdev.auth_service.auth.dto.RegisterRequest;
+import com.sniperdev.auth_service.auth.jwt.JwtService;
 import com.sniperdev.auth_service.auth.service.AuthService;
 import com.sniperdev.auth_service.common.exception.ConflictException;
 import com.sniperdev.auth_service.common.exception.GlobalExceptionHandler;
 import com.sniperdev.auth_service.common.exception.InvalidCredentialsException;
+import com.sniperdev.auth_service.users.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -38,6 +39,12 @@ class AuthControllerTest {
     @MockitoBean
     private AuthService authService;
 
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private UserService userService;
+
     @Test
     void shouldReturnCreatedWhenRegisterSucceeds() throws Exception {
 
@@ -48,17 +55,14 @@ class AuthControllerTest {
                 "Doe"
         );
 
-        when(authService.register(any()))
-                .thenReturn(new AuthenticationResponse("jwt-token"));
-
         mockMvc.perform(post("/auth/register")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.token").value("jwt-token"));
+                ;
 
-        verify(authService).register(any());
+        verify(authService).register(any(RegisterRequest.class), any());
     }
 
     @Test
@@ -71,8 +75,8 @@ class AuthControllerTest {
                 "Doe"
         );
 
-        when(authService.register(any()))
-                .thenThrow(new ConflictException("User already exists"));
+        doThrow(new ConflictException("User already exists"))
+                .when(authService).register(any(RegisterRequest.class), any());
 
         mockMvc.perform(post("/auth/register")
                         .with(csrf())
@@ -99,7 +103,7 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
 
-        verify(authService, never()).register(any());
+        verify(authService, never()).register(any(RegisterRequest.class), any());
     }
 
     @Test
@@ -110,17 +114,13 @@ class AuthControllerTest {
                 "password123"
         );
 
-        when(authService.login(any()))
-                .thenReturn(new AuthenticationResponse("jwt-token"));
-
         mockMvc.perform(post("/auth/login")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value("jwt-token"));
+                .andExpect(status().isNoContent());
 
-        verify(authService).login(any());
+        verify(authService).login(any(LoginRequest.class), any());
     }
 
     @Test
@@ -131,8 +131,8 @@ class AuthControllerTest {
                 "password123"
         );
 
-        when(authService.login(any()))
-                .thenThrow(new InvalidCredentialsException());
+        doThrow(new InvalidCredentialsException())
+                .when(authService).login(any(LoginRequest.class), any());
 
         mockMvc.perform(post("/auth/login")
                         .with(csrf())
@@ -157,6 +157,6 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
 
-        verify(authService, never()).login(any());
+        verify(authService, never()).login(any(LoginRequest.class), any());
     }
 }

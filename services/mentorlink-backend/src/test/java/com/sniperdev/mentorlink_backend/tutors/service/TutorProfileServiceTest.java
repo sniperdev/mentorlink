@@ -6,6 +6,9 @@ import com.sniperdev.mentorlink_backend.tutors.dto.TutorProfileResponse;
 import com.sniperdev.mentorlink_backend.tutors.mapper.TutorProfileMapper;
 import com.sniperdev.mentorlink_backend.tutors.model.TutorProfile;
 import com.sniperdev.mentorlink_backend.tutors.repository.TutorProfileRepository;
+import com.sniperdev.mentorlink_backend.security.CurrentUser;
+import com.sniperdev.mentorlink_backend.security.CurrentUserProvider;
+import com.sniperdev.mentorlink_backend.security.UserRole;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,6 +32,9 @@ class TutorProfileServiceTest {
     @Mock
     private TutorProfileMapper mapper;
 
+    @Mock
+    private CurrentUserProvider currentUserProvider;
+
     @InjectMocks
     private TutorProfileService tutorService;
 
@@ -38,7 +44,7 @@ class TutorProfileServiceTest {
         UUID userId = UUID.randomUUID();
 
         CreateTutorProfileRequest request =
-                new CreateTutorProfileRequest(userId, "bio");
+                new CreateTutorProfileRequest("bio");
 
         TutorProfile savedProfile =
                 TutorProfile.builder()
@@ -58,6 +64,7 @@ class TutorProfileServiceTest {
                 );
 
         when(tutorProfileRepository.existsByUserId(userId)).thenReturn(false);
+        when(currentUserProvider.getCurrentUser()).thenReturn(new CurrentUser(userId, UserRole.TUTOR));
 
         when(tutorProfileRepository.save(any(TutorProfile.class))).thenReturn(savedProfile);
 
@@ -83,10 +90,10 @@ class TutorProfileServiceTest {
 
         CreateTutorProfileRequest request =
                 new CreateTutorProfileRequest(
-                        userId,
                         "bio"
                 );
 
+        when(currentUserProvider.getCurrentUser()).thenReturn(new CurrentUser(userId, UserRole.TUTOR));
         when(tutorProfileRepository.existsByUserId(userId)).thenReturn(true);
 
         assertThatThrownBy(() -> tutorService.createTutorProfile(request)).isInstanceOf(ConflictException.class).hasMessage("Tutor profile already exists");

@@ -32,8 +32,6 @@ class TutorProfileControllerTest {
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @MockitoBean
-    private TutorProfileService tutorService;
-    @Autowired
     private TutorProfileService tutorProfileService;
 
     @Test
@@ -44,7 +42,7 @@ class TutorProfileControllerTest {
         UUID userId = UUID.randomUUID();
 
         CreateTutorProfileRequest request =
-                new CreateTutorProfileRequest(userId, "bio");
+                new CreateTutorProfileRequest("bio");
 
         TutorProfileResponse response =
                 new TutorProfileResponse(
