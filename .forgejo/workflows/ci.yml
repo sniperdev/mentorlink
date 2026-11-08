@@ -1,0 +1,55 @@
+name: MentorLink CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  backend-tests:
+    name: Backend Tests
+    runs-on: java-21
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Test MentorLink Backend
+        working-directory: services/mentorlink-backend
+        run: ./mvnw -B test
+
+  auth-tests:
+    name: Auth Service Tests
+    runs-on: java-21
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Test Auth Service
+        working-directory: services/auth-service
+        run: ./mvnw -B test
+
+  frontend:
+    name: Frontend Lint and Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+
+      - name: Install dependencies
+        working-directory: apps/mentorlink-frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: ESLint
+        working-directory: apps/mentorlink-frontend
+        run: pnpm lint
+
+      - name: Next.js Build
+        working-directory: apps/mentorlink-frontend
+        run: pnpm build
