@@ -38,8 +38,6 @@ jobs:
           apt-get install -y docker.io
 
       - name: Build Docker image
-        env:
-          DOCKER_HOST: tcp://docker-in-docker:2375
         run: |
           docker build \
             -t mentorlink-backend:${{ github.sha }} \
