@@ -53,7 +53,7 @@ public class CookieService {
         ResponseCookie cookie = ResponseCookie
                 .from(name, value)
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .sameSite("Lax")
                 .path(path)
                 .maxAge(maxAge)
