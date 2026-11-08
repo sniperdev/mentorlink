@@ -43,9 +43,26 @@ jobs:
           apt-get update
           apt-get install -y docker.io
 
-      - name: Build Docker image
+      - name: Login to Forgejo Container Registry
+        env:
+          DOCKER_HOST: tcp://docker-in-docker:2375
+          REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
         run: |
+          echo "$REGISTRY_TOKEN" | docker login forgejo.home.sniperlab.uk \
+            -u "${{ github.repository_owner }}" \
+            --password-stdin
+
+      - name: Build and push Docker image
+        env:
+          DOCKER_HOST: tcp://docker-in-docker:2375
+        run: |
+          IMAGE="forgejo.home.sniperlab.uk/sniperdev/mentorlink-frontend"
+
           docker build \
-            -t mentorlink-frontend:${{ github.sha }} \
+            -t "$IMAGE:${{ github.sha }}" \
+            -t "$IMAGE:latest" \
             --build-arg NEXT_PUBLIC_API_URL=/api/v1 \
             ./apps/mentorlink-frontend
+
+          docker push "$IMAGE:${{ github.sha }}"
+          docker push "$IMAGE:latest"
