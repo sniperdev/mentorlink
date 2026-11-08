@@ -51,6 +51,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install Docker CLI
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends docker.io
+
+      - name: Check Docker daemon
+        env:
+          DOCKER_HOST: tcp://docker-in-docker:2375
+        run: docker version
       - name: Enable pnpm
         run: |
           corepack enable
