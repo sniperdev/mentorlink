@@ -59,6 +59,12 @@ jobs:
       - name: Check Docker daemon
         run: docker version
 
+      - name: Test Docker build
+        run: |
+          docker build \
+            -t mentorlink-frontend:test \
+            ./apps/mentorlink-frontend
+
       - name: Enable pnpm
         run: |
           corepack enable
