@@ -1,0 +1,53 @@
+name: Frontend CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/mentorlink-frontend/**'
+      - '.forgejo/workflows/frontend.yml'
+  pull_request:
+    paths:
+      - 'apps/mentorlink-frontend/**'
+      - '.forgejo/workflows/frontend.yml'
+  workflow_dispatch:
+
+jobs:
+  frontend:
+    name: Frontend Lint, Build and Docker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@12.18.0 --activate
+
+      - name: Install dependencies
+        working-directory: apps/mentorlink-frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: ESLint
+        working-directory: apps/mentorlink-frontend
+        run: pnpm lint
+
+      - name: Next.js Build
+        working-directory: apps/mentorlink-frontend
+        run: pnpm build
+
+      - name: Set up Docker CLI
+        run: |
+          apt-get update
+          apt-get install -y docker.io
+
+      - name: Build Docker image
+        env:
+          DOCKER_HOST: tcp://docker-in-docker:2375
+        run: |
+          docker build \
+            -t mentorlink-frontend:${{ github.sha }} \
+            --build-arg NEXT_PUBLIC_API_URL=/api/v1 \
+            ./apps/mentorlink-frontend

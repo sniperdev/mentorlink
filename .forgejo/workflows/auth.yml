@@ -1,0 +1,46 @@
+name: Auth CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'services/auth-service/**'
+      - '.forgejo/workflows/auth.yml'
+  pull_request:
+    paths:
+      - 'services/auth-service/**'
+      - '.forgejo/workflows/auth.yml'
+  workflow_dispatch:
+
+jobs:
+  auth:
+    name: Auth Tests and Docker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Run tests
+        working-directory: services/auth-service
+        run: ./mvnw -B test
+
+      - name: Set up Docker CLI
+        run: |
+          apt-get update
+          apt-get install -y docker.io
+
+      - name: Build Docker image
+        env:
+          DOCKER_HOST: tcp://docker-in-docker:2375
+        run: |
+          docker build \
+            -t mentorlink-auth:${{ github.sha }} \
+            ./services/auth-service
