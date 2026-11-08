@@ -7,6 +7,8 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 ARG NEXT_PUBLIC_API_URL=/api/v1
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ARG BACKEND_INTERNAL_URL=http://mentorlink-backend:8080
+ENV BACKEND_INTERNAL_URL=${BACKEND_INTERNAL_URL}
 RUN pnpm build
 
 FROM node:22-alpine AS runner
