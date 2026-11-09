@@ -1,3 +1,4 @@
+
 package com.sniperdev.mentorlink_backend.security;
 
 import lombok.RequiredArgsConstructor;
@@ -27,8 +28,13 @@ public class SecurityConfiguration {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/api/v1/subjects", "/api/v1/subjects/**")
-                        .permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/v1/subjects",
+                                "/api/v1/subjects/**",
+                                "/api/v1/tutors",
+                                "/api/v1/tutors/**"
+                        ).permitAll()
                         .requestMatchers("/actuator/health")
                         .permitAll()
                         .anyRequest().authenticated())
