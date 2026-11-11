@@ -66,3 +66,13 @@ jobs:
 
           docker push "$IMAGE:${{ github.sha }}"
           docker push "$IMAGE:latest"
+
+      - name: Trigger Coolify deploy
+        if: github.event_name != 'pull_request'
+        env:
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          COOLIFY_URL: ${{ secrets.COOLIFY_WEBHOOK_URL_FRONTEND }}
+        run: |
+          curl --fail -sS \
+            -H "Authorization: Bearer $COOLIFY_TOKEN" \
+            "$COOLIFY_URL"
