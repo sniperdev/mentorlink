@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Architecture Review — MentorLink</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: #f5f5f7;
+      color: #1d1d1f;
+      line-height: 1.6;
+      display: flex;
+      min-height: 100vh;
+      min-width: 0;
+    }
+
+    nav {
+      width: 220px;
+      flex-shrink: 0;
+      background: #fff;
+      border-right: 1px solid #e5e5ea;
+      padding: 2rem 1.25rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    nav h2 {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #8e8e93;
+      margin-bottom: 1rem;
+    }
+
+    nav a {
+      display: block;
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      color: #3a3a3c;
+      text-decoration: none;
+      font-size: 0.875rem;
+      margin-bottom: 0.25rem;
+      transition: background 0.15s;
+    }
+
+    nav a:hover { background: #f2f2f7; }
+
+    main {
+      flex: 1 1 0;
+      min-width: 0;
+      padding: 2.5rem 3rem;
+      max-width: 1600px;
+    }
+
+    header {
+      margin-bottom: 2.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid #e5e5ea;
+    }
+
+    header h1 { font-size: 1.75rem; font-weight: 700; }
+    header p { margin-top: 0.5rem; color: #6e6e73; font-size: 0.95rem; }
+    header .meta { margin-top: 0.75rem; font-size: 0.8rem; color: #8e8e93; }
+
+    section { margin-bottom: 3rem; scroll-margin-top: 2rem; }
+
+    section h2 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #e5e5ea;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e5e5ea;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+
+    .card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; }
+    .card p { color: #3a3a3c; font-size: 0.9rem; overflow-wrap: break-word; word-break: break-word; }
+    .card p + p { margin-top: 0.6rem; }
+
+    .diagram-card {
+      background: #fff;
+      border: 1px solid #e5e5ea;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      overflow-x: auto;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      min-width: 0;
+    }
+
+    .diagram-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.4rem; }
+    .diagram-desc { color: #6e6e73; font-size: 0.85rem; margin-bottom: 1rem; }
+    .mermaid {
+      min-height: 80px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .findings { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .finding {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+      padding: 0.875rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      min-width: 0;
+    }
+
+    .finding.strength { background: #f0faf4; border-left: 3px solid #30d158; }
+    .finding.concern  { background: #fffbf0; border-left: 3px solid #ff9f0a; }
+    .finding.risk     { background: #fff5f5; border-left: 3px solid #ff3b30; }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .finding-text {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+
+    .badge-strength { background: #30d158; color: #fff; }
+    .badge-concern  { background: #ff9f0a; color: #fff; }
+    .badge-risk     { background: #ff3b30; color: #fff; }
+
+    .finding-text strong { display: block; margin-bottom: 0.2rem; overflow-wrap: break-word; word-break: break-word; }
+    .finding-text p { color: #3a3a3c; overflow-wrap: break-word; word-break: break-word; }
+    .finding-text * { overflow-wrap: break-word; word-break: break-word; }
+
+    .recommendations ol { padding-left: 1.5rem; }
+    .recommendations li { margin-bottom: 0.75rem; color: #3a3a3c; font-size: 0.9rem; overflow-wrap: break-word; word-break: break-word; }
+    .recommendations li strong { color: #1d1d1f; }
+
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; background: #f2f2f7; padding: 0.05rem 0.3rem; border-radius: 4px; }
+
+    @media (max-width: 600px) {
+      body {
+        flex-direction: column;
+      }
+
+      nav {
+        width: 100%;
+        min-width: 100%;
+        height: auto;
+        max-height: 30vh;
+        position: relative;
+        border-right: none;
+        border-bottom: 1px solid #e5e5ea;
+        overflow-x: auto;
+      }
+
+      nav a {
+        display: inline-block;
+        margin-bottom: 0;
+        margin-right: 0.25rem;
+      }
+
+      main {
+        padding: 1.5rem 1.25rem;
+        max-width: 100%;
+      }
+
+      .diagram-card { margin-left: -1.25rem; margin-right: -1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <h2>Architecture Review</h2>
+    <a href="#current">Current Architecture</a>
+    <a href="#separation-of-concerns">Separation of Concerns</a>
+    <a href="#cohesion-and-coupling">Cohesion and Coupling</a>
+    <a href="#layered-architecture">Layered Architecture</a>
+    <a href="#hexagonal-architecture-ports-and-adapters">Hexagonal Architecture / Ports and Adapters</a>
+    <a href="#scalability">Scalability</a>
+    <a href="#observability">Observability</a>
+    <a href="#security">Security</a>
+    <a href="#reliability">Reliability</a>
+    <a href="#resilience">Resilience</a>
+    <a href="#data-architecture">Data Architecture</a>
+    <a href="#cost-efficiency-finops">Cost Efficiency (FinOps)</a>
+    <a href="#operability">Operability</a>
+    <a href="#deployment-architecture">Deployment Architecture</a>
+    <a href="#event-architecture">Event Architecture</a>
+    <a href="#ai-architecture">AI Architecture</a>
+    <a href="#multi-tenancy">Multi-Tenancy</a>
+    <a href="#architecture-governance">Architecture Governance</a>
+    <a href="#domain-architecture">Domain Architecture</a>
+    <a href="#api-architecture">API Architecture</a>
+    <a href="#architecture-fitness-metrics">Architecture Fitness Metrics</a>
+    <a href="#common-anti-patterns">Common Anti-Patterns</a>
+    <a href="#testability">Testability</a>
+    <a href="#evolvability">Evolvability</a>
+    <a href="#architectural-smells-codebase-review-only-not-applicable-in-design-review">Architectural Smells</a>
+    <a href="#recommended">Recommended Architecture</a>
+  </nav>
+
+  <main>
+    <header>
+      <h1>MentorLink Architecture Review</h1>
+      <p>Tutor-matching platform: a Next.js frontend, a Spring Boot auth-service that issues JWTs, and a Spring Boot mentorlink-backend (tutor profiles and subjects) acting as an OAuth2 resource server, each with its own PostgreSQL database.</p>
+      <p class="meta">Generated 2026-11-11 · Codebase Review · branch <code>docs/architecture-discovery</code> @ <code>25c56f1</code></p>
+    </header>
+
+    <!-- ============================== CURRENT ============================== -->
+    <section id="current">
+      <h2>Current Architecture</h2>
+
+      <div class="card">
+        <p><strong>CodeGraph not available — structural analysis based on file/grep heuristics.</strong></p>
+        <p>The codebase is small (about 2.7k lines of Java across two services and 1.3k lines of TypeScript/TSX), so the whole main source was read. The deployment described here is a local/LAN development and testing environment managed by Coolify. Findings about it describe current limitations, not permanent requirements. Deployment facts that need the live Coolify configuration are marked <em>open</em> in <code>docs/code-map.md</code> §9.</p>
+      </div>
+
+      <div class="diagram-card">
+        <h3>System Context</h3>
+        <p class="diagram-desc">MentorLink as one system: who uses it, what it depends on, and how it gets built and deployed.</p>
+        <div class="mermaid">
+graph TB
+  Visitor(["Visitor or student"])
+  Tutor(["Tutor"])
+  Admin(["Admin"])
+  Sys["MentorLink<br/>frontend + auth-service + backend"]
+  PG[("PostgreSQL 17<br/>auth_db, tutor_db")]
+  Forgejo["Forgejo<br/>git, Actions, container registry"]
+  Coolify["Coolify<br/>LAN deployment host"]
+
+  Visitor -->|browse tutors and subjects, register, log in| Sys
+  Tutor -.->|create tutor profile - not reachable from UI| Sys
+  Admin -.->|create subject - not reachable from UI| Sys
+  Sys --> PG
+  Forgejo -->|images + deploy webhooks| Coolify
+  Coolify -->|runs containers| Sys
+        </div>
+      </div>
+
+      <div class="diagram-card">
+        <h3>Component Diagram</h3>
+        <p class="diagram-desc">The real modules in each deployable and how they relate, including the problem spots: an unused config class, duplicated common code, and the token handoff that does not connect.</p>
+        <div class="mermaid">
+graph LR
+  subgraph sg_fe["mentorlink-frontend - Next.js"]
+    FEPages["app/(public) pages"]
+    FEHome["features/home sections"]
+    FETutors["features/tutors<br/>api, hooks, TutorCard, types"]
+    FEClient["lib/api/client.ts<br/>axios, no credentials"]
+    FERewrite["next.config.ts<br/>rewrite /api/v1/*"]
+  end
+
+  subgraph sg_auth["auth-service"]
+    AController["AuthController<br/>/auth/register, /auth/login"]
+    AService["AuthService"]
+    AUsers["users<br/>UserService, User, UserRepository"]
+    AJwt["JwtService<br/>HS256 sign"]
+    ARefresh["auth/refresh<br/>RefreshTokenService, CookieService"]
+    AFilter["JwtAuthenticationFilter<br/>Bearer header"]
+    ACommon["common<br/>ApiError, exceptions, AuditableEntity"]
+  end
+
+  subgraph sg_be["mentorlink-backend"]
+    BSec["security<br/>resource server, JwtDecoder HS256"]
+    BConv["JwtAuthenticationConverter"]
+    BDead["JwtAuthenticationConverterConfiguration<br/>no @Bean - unused"]
+    BCurUser["CurrentUserProvider<br/>SecurityCurrentUserProvider"]
+    BTutors["tutors<br/>controller, service, mapper, repo"]
+    BSubjects["subjects<br/>controller, service, mapper, repo"]
+    BCommon["common<br/>ApiError, exceptions, AuditableEntity"]
+  end
+
+  FEPages --> FEHome --> FETutors --> FEClient --> FERewrite
+  FERewrite -->|HTTP| BTutors
+  FERewrite -->|HTTP| BSubjects
+
+  AController --> AService
+  AService --> AUsers
+  AService --> AJwt
+  AService --> ARefresh
+  AFilter --> AJwt
+  AFilter --> AUsers
+
+  BSec --> BConv
+  BTutors --> BCurUser
+  BCurUser --> BSec
+  BDead -.-x BSec
+
+  ARefresh -.->|cookies only, backend reads Bearer only| BSec
+  AJwt -.-|shared JWT_SECRET + role claim string| BSec
+  ACommon -.-|copy-pasted| BCommon
+        </div>
+      </div>
+
+      <div class="diagram-card">
+        <h3>Application Diagram</h3>
+        <p class="diagram-desc">How the browser reaches each application. Only <code>/api/v1/*</code> is proxied through the Next.js server; nothing routes the browser to auth-service, and the frontend's tutor type does not match the backend response.</p>
+        <div class="mermaid">
+graph LR
+  Browser["Browser"]
+  subgraph sg_next["Next.js server :3000"]
+    Pages["Pages /, /tutors/[id]"]
+    Rewrite["Rewrite /api/v1/* to BACKEND_INTERNAL_URL"]
+  end
+  Auth["auth-service :8081<br/>/auth/*"]
+  Backend["mentorlink-backend :8080<br/>/api/v1/*"]
+
+  Browser -->|HTML and JS| Pages
+  Browser -->|GET /api/v1/tutors via axios| Rewrite
+  Rewrite --> Backend
+  Browser -.->|no UI, no route, no CORS| Auth
+  Backend -.->|returns id, userId, bio - UI expects firstName, lastName, email| Browser
+        </div>
+      </div>
+
+      <div class="diagram-card">
+        <h3>Sequence Diagram — authentication and token use</h3>
+        <p class="diagram-desc">What happens today when a client logs in and then calls a protected backend endpoint. The token is issued correctly but cannot reach the backend.</p>
+        <div class="mermaid">
+sequenceDiagram
+  actor U as User
+  participant B as Browser
+  participant A as auth-service
+  participant ADB as auth_db
+  participant N as Next.js rewrite
+  participant R as backend resource server
+  participant T as TutorProfileController
+
+  U->>B: submit credentials
+  B->>A: POST /auth/login
+  A->>ADB: findByEmail, bcrypt match
+  Note over A: UserStatus is not checked
+  A->>ADB: insert refresh token hash
+  A-->>B: 204 + Set-Cookie access_token, refresh_token - HttpOnly Secure
+  Note over B: plain HTTP on a LAN host drops Secure cookies
+  B->>N: POST /api/v1/tutors/profile, cookie only for auth host, no Authorization header
+  N->>R: forward request
+  R->>R: BearerTokenResolver finds no Authorization header
+  R-->>B: 401 Unauthorized
+  Note over B,A: no /auth/refresh or /auth/logout exists
+        </div>
+      </div>
+
+      <div class="diagram-card">
+        <h3>Deployment Diagram</h3>
+        <p class="diagram-desc">The build-and-deploy path and the runtime topology according to the repo. Whether Coolify runs the CI images or builds from <code>docker-compose.coolify.yml</code> is open.</p>
+        <div class="mermaid">
+graph TB
+  Dev["Developer push to main"]
+  subgraph sg_forgejo["Forgejo"]
+    CIA["auth.yml<br/>mvnw test, docker build"]
+    CIB["backend.yml<br/>mvnw test, docker build"]
+    CIF["frontend.yml<br/>lint, next build, docker build"]
+    Reg["Container registry<br/>tags: sha + latest"]
+  end
+  subgraph sg_host["LAN host managed by Coolify"]
+    CoolifyNode["Coolify<br/>3 deploy webhooks"]
+    subgraph sg_net["bridge network mentorlink"]
+      FEc["frontend :3000<br/>host 18080"]
+      BEc["mentorlink-backend :8080<br/>host 18081"]
+      AUc["auth-service :8081<br/>host 18082"]
+      PGc[("postgres 17<br/>healthcheck")]
+    end
+    Vol[("volume mentorlink_postgres_data")]
+  end
+
+  Dev --> CIA
+  Dev --> CIB
+  Dev --> CIF
+  CIA --> Reg
+  CIB --> Reg
+  CIF --> Reg
+  CIA -->|webhook| CoolifyNode
+  CIB -->|webhook| CoolifyNode
+  CIF -->|webhook| CoolifyNode
+  CoolifyNode -.->|pull images or build from compose - open| sg_net
+  FEc --> BEc
+  BEc --> PGc
+  AUc --> PGc
+  PGc --> Vol
+        </div>
+      </div>
+
+      <div class="diagram-card">
+        <h3>Data Architecture</h3>
+        <p class="diagram-desc">Four tables in two databases. Both <code>user_id</code> columns point at <code>auth_db.users.id</code> by convention only. There is no foreign key and no synchronisation, so no relationship lines are drawn.</p>
+        <div class="mermaid">
+erDiagram
+  USERS {
+    uuid id PK
+    varchar email UK
+    varchar password_hash
+    varchar first_name
+    varchar last_name
+    varchar role "STUDENT or TUTOR or ADMIN"
+    varchar status "ACTIVE or INACTIVE or BLOCKED"
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  REFRESH_TOKENS {
+    uuid id PK
+    uuid user_id "auth_db users.id, no FK"
+    varchar token_hash UK
+    timestamp expires_at "no time zone"
+    boolean revoked "never set"
+    timestamp last_used_at "never set"
+    timestamp created_at
+    timestamp updated_at
+  }
+  TUTOR_PROFILES {
+    uuid id PK
+    uuid user_id UK "cross-database reference"
+    text bio
+    boolean active
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  SUBJECTS {
+    uuid id PK
+    varchar name UK
+    varchar slug UK
+    boolean active
+    timestamptz created_at
+    timestamptz updated_at
+  }
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Narrative</h3>
+        <p>The system is split along a sensible business line. <strong>auth-service</strong> owns identity (users, passwords, tokens) in <code>auth_db</code>. <strong>mentorlink-backend</strong> owns the tutoring catalogue (tutor profiles, subjects) in <code>tutor_db</code> and trusts JWTs signed with a shared HS256 secret. The two Spring services never call each other; their only coupling is the secret and the <code>role</code> claim string. Inside each service the code follows a clean controller → service → repository → mapper layering, with records as DTOs and one consistent <code>ApiError</code> body.</p>
+        <p>The architecture's weak points are the seams between the parts, not the parts themselves:</p>
+        <ul style="margin: 0.4rem 0 0 1.2rem; color:#3a3a3c; font-size:0.9rem;">
+          <li>Tokens go out as cookies but are read back only from the Bearer header.</li>
+          <li>The frontend's tutor type expects identity data (names, email) that lives in the other bounded context.</li>
+          <li>No process creates TUTOR or ADMIN users.</li>
+          <li>Tests disable Flyway, so the shipped schema is never exercised before deploy.</li>
+        </ul>
+        <p>Operationally, the deployment is defined twice (CI images plus three webhooks, and a compose file that builds from source), there is no application logging, and secrets and routing live only in Coolify.</p>
+        <p>No warnings were raised while parsing <code>architecture-principles.md</code>.</p>
+      </div>
+    </section>
+
+    <!-- ============================== CRITERIA ============================== -->
+
+    <section id="separation-of-concerns">
+      <h2>Separation of Concerns</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">Strength</span>
+          <div class="finding-text">
+            <strong>Clean per-feature layering with explicit mappers</strong>
+            <p>Each backend feature (<code>tutors/</code>, <code>subjects/</code>) separates controller, service, repository, entity, DTO records and a mapper (<code>SubjectMapper</code>, <code>TutorProfileMapper</code>). Controllers contain no business rules and entities never leave the service layer.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Authentication use case writes HTTP cookies</strong>
+            <p><code>AuthService.register/login</code> take an <code>HttpServletResponse</code> and call <code>CookieService</code> directly (<code>AuthService.java:29,44,55-65</code>). Credential checking, token issuance and token transport are fused into one method. Changing the transport (cookie, response body, BFF), which Risk 1 requires, therefore means changing the use case itself.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Frontend UI consumes raw API responses without a mapping layer</strong>
+            <p><code>features/tutors/api/tutor.api.ts</code> returns <code>response.data</code> typed as a hand-written <code>TutorSummary</code>, and <code>TutorCard</code> renders it directly. Nothing checks or converts the response at the boundary, even though <code>zod</code> is already a dependency.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="cohesion-and-coupling">
+      <h2>Cohesion and Coupling</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">Strength</span>
+          <div class="finding-text">
+            <strong>Small, cohesive feature packages and no runtime coupling between services</strong>
+            <p>Packages are organised by capability (<code>users</code>, <code>auth/refresh</code>, <code>tutors</code>, <code>subjects</code>), and no package cycles were found by import inspection. Neither Spring service has an HTTP client for the other, so they have no synchronous dependency.</p>
+          </div>
+        </div>
+        <div class="finding risk">
+          <span class="badge badge-risk">Risk</span>
+          <div class="finding-text">
+            <strong>Implicit token contract between auth-service and backend</strong>
+            <p>The services agree on the signing secret, the algorithm, <code>sub</code> as a UUID, and the <code>role</code> claim holding a <code>UserRole</code> enum name. That last point is duplicated as two separate enums (auth <code>users/model/UserRole.java</code>, backend <code>security/UserRole.java</code>). The backend calls <code>UserRole.valueOf(role)</code> (<code>SecurityCurrentUserProvider.java:19</code>), so a renamed or added role, or a missing claim, causes 500s. This contract is not documented or tested anywhere.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Copy-pasted cross-cutting code</strong>
+            <p><code>ApiError</code>, <code>GlobalExceptionHandler</code>, <code>ConflictException</code>, <code>ResourceNotFoundException</code>, <code>AuditableEntity</code> and <code>JpaAuditioningConfig</code> exist as identical copies in both services. Duplication is a fair trade-off for keeping the services independent, but the error format, which is a public contract, can now drift silently.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="layered-architecture">
+      <h2>Layered Architecture</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">Strength</span>
+          <div class="finding-text">
+            <strong>Consistent dependency direction</strong>
+            <p>Controller → Service → Repository holds in both services. Responses are DTO records built by mappers, not JPA entities, and Hibernate runs with <code>open-in-view: false</code> and <code>ddl-auto: validate</code>.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Application layer depends on servlet types</strong>
+            <p><code>AuthService</code> imports <code>jakarta.servlet.http.HttpServletResponse</code>, so the service layer depends on the web layer. The token logic cannot be unit-tested or reused without the servlet API.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="hexagonal-architecture-ports-and-adapters">
+      <h2>Hexagonal Architecture / Ports and Adapters</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">Strength</span>
+          <div class="finding-text">
+            <strong>CurrentUserProvider is a real port</strong>
+            <p><code>TutorProfileService</code> depends on the <code>CurrentUserProvider</code> interface, and <code>SecurityCurrentUserProvider</code> is the Spring Security adapter. The domain service has no knowledge of JWTs, which keeps <code>TutorProfileServiceTest</code> simple.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Token delivery has no port</strong>
+            <p>There are few external integrations, so full hexagonal structure is not warranted. The exception is token issuance and delivery: it is the part most likely to change (cookie, Bearer, BFF, asymmetric keys), yet it is wired as concrete classes (<code>JwtService</code>, <code>CookieService</code>) inside the use case.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="scalability">
+      <h2>Scalability</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">Strength</span>
+          <div class="finding-text">
+            <strong>Stateless services with local token verification</strong>
+            <p>Both security chains use <code>SessionCreationPolicy.STATELESS</code>, and the backend verifies JWTs locally without calling auth-service, so both scale horizontally. The frontend caches reads with React Query (5-minute stale time).</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Unbounded list endpoints</strong>
+            <p><code>GET /api/v1/tutors</code> and <code>GET /api/v1/subjects</code> return <code>findAll()</code> with no pagination (no <code>Pageable</code> anywhere). This is fine at today's data volume, but it is a breaking API change once it is needed.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Unbounded growth and no backpressure on auth</strong>
+            <p>Every login and registration inserts a <code>refresh_tokens</code> row that is never read, revoked or deleted. Nothing rate-limits <code>/auth/login</code>, and each BCrypt check is deliberately CPU-expensive.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="observability">
+      <h2>Observability</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">Strength</span>
+          <div class="finding-text">
+            <strong>Health endpoints exist</strong>
+            <p>Spring Boot Actuator exposes <code>health</code> and <code>info</code> in both services, and <code>/actuator/health</code> is explicitly permitted in both security chains.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>No application logging, metrics or correlation</strong>
+            <p>Neither service has a single log statement (no <code>@Slf4j</code> or <code>LoggerFactory</code>). Failed logins, conflicts and authorization denials leave no trace, nothing is structured or tagged with a request ID, and no metrics endpoint is exposed. Diagnosing the auth handoff problem in a running environment would be guesswork.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Some errors escape the error model</strong>
+            <p>Exceptions thrown inside <code>JwtAuthenticationFilter</code> (deleted user, <code>UserService.java:47</code>) and <code>DataIntegrityViolationException</code> from concurrent creates bypass <code>@RestControllerAdvice</code>. They surface as Spring's default error body, with no log line.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="security">
+      <h2>Security</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">Strength</span>
+          <div class="finding-text">
+            <strong>Sound credential and token storage primitives</strong>
+            <p>Passwords use BCrypt. Refresh tokens are 256-bit <code>SecureRandom</code> values stored only as SHA-256 hashes. Cookies are <code>HttpOnly</code>, <code>Secure</code> and <code>SameSite=Lax</code>. Authorization is centralised: URL rules plus <code>@PreAuthorize</code> on the two write endpoints. Secrets come from environment variables, and compose refuses to start without them.</p>
+          </div>
+        </div>
+        <div class="finding risk">
+          <span class="badge badge-risk">Risk</span>
+          <div class="finding-text">
+            <strong>Token transport mismatch breaks the auth flow</strong>
+            <p>auth-service delivers tokens only as cookies (<code>CookieService.java:18-66</code>) with an empty response body. The backend's resource server reads only <code>Authorization: Bearer</code> (<code>SecurityConfiguration.java:41</code>), and the axios client sends neither (<code>lib/api/client.ts:4</code>). The protected endpoints cannot be used from the web app. Quick fixes, such as returning the token to JavaScript and keeping it in <code>localStorage</code>, would weaken XSS resistance. The fix needs a deliberate design decision.</p>
+          </div>
+        </div>
+        <div class="finding risk">
+          <span class="badge badge-risk">Risk</span>
+          <div class="finding-text">
+            <strong>Symmetric shared signing key, no issuer or audience checks</strong>
+            <p>Both services hold the same HS256 <code>JWT_SECRET</code>, so anything that can read the backend's environment can mint tokens for any user and role. <code>JwtConfiguration</code> builds a <code>NimbusJwtDecoder</code> without <code>iss</code> or <code>aud</code> validation. Keys cannot be rotated without a coordinated restart of both services.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Insecure-design gaps in the auth lifecycle</strong>
+            <p>Login ignores <code>UserStatus</code>, so BLOCKED users still get tokens (<code>AuthService.java:44-53</code>). There is no rate limiting or lockout, no refresh, no logout or revocation, and no role-management or privileged-account provisioning.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Network boundary and database credential isolation</strong>
+            <p><code>docker-compose.coolify.yml</code> publishes all three services on host ports (18080–18082) instead of one entry point. Both services connect with the same <code>mentorlink</code> database user, which can reach both <code>auth_db</code> and <code>tutor_db</code>, so database-per-service is not enforced by credentials. CORS is hard-coded to <code>http://localhost:3000</code> (<code>WebConfig.java:13</code>). Exposure and TLS of the live deployment are open.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>CSRF is disabled in both chains</strong>
+            <p>Disabling CSRF is correct for a Bearer-only API. If the fix for the transport mismatch makes the backend accept the cookie, CSRF protection must come back at the same time.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="reliability">
+      <h2>Reliability</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">Strength</span>
+          <div class="finding-text">
+            <strong>Database readiness gating and restart policy</strong>
+            <p>Postgres has a <code>pg_isready</code> healthcheck, both services wait on <code>condition: service_healthy</code>, and every container uses <code>restart: unless-stopped</code>.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Application containers have no healthcheck</strong>
+            <p>Actuator health exists, but neither the Dockerfiles nor the compose file define a healthcheck for the frontend, backend or auth-service. Coolify cannot tell a crashed-but-running JVM from a healthy one, and the frontend's <code>depends_on</code> gates only on container start.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Single Postgres instance for both services</strong>
+            <p>One instance is a single point of failure for the whole platform. That is acceptable for the current LAN/test environment, but it should be an explicit decision before any wider rollout.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="resilience">
+      <h2>Resilience</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">Strength</span>
+          <div class="finding-text">
+            <strong>Failure isolation between identity and catalogue</strong>
+            <p>The backend never calls auth-service, so an auth outage does not affect public browsing or the validation of already-issued tokens. The blast radius is limited to new logins.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>No backup, restore or recovery objectives</strong>
+            <p>All data sits in one Docker volume (<code>mentorlink_postgres_data</code>), with no backup job, restore procedure, RTO or RPO. Because accounts cannot be re-provisioned automatically, losing or recreating the volume means rebuilding test users by hand.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Frontend hides failures</strong>
+            <p><code>FeaturedTutorsSection</code> handles only <code>isLoading</code>. A backend failure, after one React Query retry, renders an empty list instead of an error state, so outages look like "no tutors".</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="data-architecture">
+      <h2>Data Architecture</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">Strength</span>
+          <div class="finding-text">
+            <strong>Database per service with versioned migrations</strong>
+            <p><code>auth_db</code> and <code>tutor_db</code> each have one owner, schemas are managed by Flyway, and Hibernate only validates. No table is written by two services.</p>
+          </div>
+        </div>
+        <div class="finding risk">
+          <span class="badge badge-risk">Risk</span>
+          <div class="finding-text">
+            <strong>Tutor data is split across contexts with no defined source for the read model</strong>
+            <p>A tutor listing needs the name and email from <code>auth_db.users</code> and the bio from <code>tutor_db.tutor_profiles</code>. Nothing in the architecture joins them: there are no claims, events or API calls for it. The frontend already assumes the joined shape (<code>types/tutor.ts</code>), so this missing decision shows up as Risk 2 in the code map.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>No cross-database consistency, retention or deletion path</strong>
+            <p><code>tutor_profiles.user_id</code> can point at a deleted or blocked user indefinitely. <code>refresh_tokens</code> is never cleaned up, and its <code>revoked</code> and <code>last_used_at</code> columns are never written. There is no user-deletion path.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Inconsistent types and normalisation</strong>
+            <p><code>refresh_tokens</code> uses <code>TIMESTAMP</code> while all other tables use <code>TIMESTAMPTZ</code>. <code>SubjectService</code> checks for duplicates on the trimmed name but stores the untrimmed one, and its slug generator replaces single spaces only (<code>SubjectService.java:29-46,63</code>).</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="cost-efficiency-finops">
+      <h2>Cost Efficiency (FinOps)</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">Strength</span>
+          <div class="finding-text">
+            <strong>Small, self-hosted footprint</strong>
+            <p>Three small containers and one shared Postgres run on a self-hosted Coolify/Forgejo stack, with no paid cloud services or per-request external calls. Runtime images are slim (JRE-only, Next.js standalone).</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Redundant CI work</strong>
+            <p>CI runs <code>./mvnw test</code>, and then the Dockerfile runs <code>./mvnw verify</code> again inside the image build, so every Java pipeline runs its tests twice. Each job also runs <code>apt-get install docker.io</code>. Both waste CI minutes and slow feedback.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="operability">
+      <h2>Operability</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">Strength</span>
+          <div class="finding-text">
+            <strong>Documented intent and a code map</strong>
+            <p>The README explains the service split and its rationale, and <code>docs/code-map.md</code> now records flows, entry points, risks and the deployment state.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Deployment knowledge lives in the Coolify UI</strong>
+            <p>The exposure, routing, environment values and secret storage of the running deployment cannot be determined from the repo, and the owner could not confirm them. There are no runbooks, no rollback procedure, no alerting and no dashboards.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Routine tasks have no procedure</strong>
+            <p>Granting TUTOR or ADMIN, unblocking a user and rotating <code>JWT_SECRET</code> have no defined procedure. Today each would need direct database or environment access.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="deployment-architecture">
+      <h2>Deployment Architecture</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">Strength</span>
+          <div class="finding-text">
+            <strong>Independent, immutable, per-service pipelines</strong>
+            <p>Each deployable has its own workflow with path filters, a test gate and an image tagged with the commit SHA. Dockerfiles are multi-stage and run as non-root users. Services deploy independently through separate Coolify webhooks.</p>
+          </div>
+        </div>
+        <div class="finding risk">
+          <span class="badge badge-risk">Risk</span>
+          <div class="finding-text">
+            <strong>Two divergent deployment definitions</strong>
+            <p>CI builds and pushes images, while <code>docker-compose.coolify.yml</code> builds from source and has no <code>image:</code> references. The two set different build-time values for <code>NEXT_PUBLIC_API_URL</code> (<code>/api/v1</code> vs <code>http://localhost:18081/api/v1</code>), which is inlined into the browser bundle. What actually runs depends on which path Coolify uses, which is open.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>No post-deploy verification or explicit rollback</strong>
+            <p>Every push to <code>main</code> deploys straight away through a webhook, with no smoke test, health gate or promotion step. Rolling back means manually redeploying an older SHA tag in Coolify. Environment configuration is kept in Coolify, not as code.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="event-architecture">
+      <h2>Event Architecture</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">No material findings</span>
+          <div class="finding-text">
+            <strong>No material findings</strong>
+            <p>The available evidence did not reveal notable strengths, concerns, or risks for this area.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="ai-architecture">
+      <h2>AI Architecture</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">No material findings</span>
+          <div class="finding-text">
+            <strong>No material findings</strong>
+            <p>The available evidence did not reveal notable strengths, concerns, or risks for this area.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="multi-tenancy">
+      <h2>Multi-Tenancy</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">No material findings</span>
+          <div class="finding-text">
+            <strong>No material findings</strong>
+            <p>The available evidence did not reveal notable strengths, concerns, or risks for this area.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="architecture-governance">
+      <h2>Architecture Governance</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">Strength</span>
+          <div class="finding-text">
+            <strong>Key decisions have stated rationale</strong>
+            <p>The README explains why identity is a separate service, why the backend is a resource server, and why each service owns its database.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>No ADRs, and the documentation has drifted from the code</strong>
+            <p>There is no ADR directory. The README diagram shows the frontend talking to both services and calls the backend "functional and tested", but no browser path reaches auth-service and issued tokens cannot be used against the backend. Token transport, signing keys and tutor data ownership are undocumented decisions.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="domain-architecture">
+      <h2>Domain Architecture</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">Strength</span>
+          <div class="finding-text">
+            <strong>Services are split by business capability</strong>
+            <p>Identity and access (auth-service) and the tutoring catalogue (backend) are distinct bounded contexts, rather than a technical split by layer.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>No context map for concepts that span both contexts</strong>
+            <p>"Tutor" spans both contexts: the TUTOR role belongs to identity, the profile to the catalogue, and the display name to identity. Nothing defines how a user becomes a tutor, which context is upstream, or how catalogue reads identity data. The result is a profile endpoint that requires a role nobody can obtain.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="api-architecture">
+      <h2>API Architecture</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">Strength</span>
+          <div class="finding-text">
+            <strong>Versioned backend API with a consistent error body and OpenAPI</strong>
+            <p>Backend routes live under <code>/api/v1</code>. Both services return the same <code>ApiError</code> shape (timestamp, status, error, message, path, validationErrors). springdoc publishes an OpenAPI document for the backend.</p>
+          </div>
+        </div>
+        <div class="finding risk">
+          <span class="badge badge-risk">Risk</span>
+          <div class="finding-text">
+            <strong>Undetected consumer/provider drift</strong>
+            <p>The frontend's <code>TutorSummary</code> (<code>id, email, firstName, lastName, bio</code>) does not match the backend's <code>TutorSummaryResponse</code> (<code>id, userId, bio</code>). <code>TutorCard.tsx:24</code> will throw as soon as one profile exists. No generated client, schema validation or contract test would catch this.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Auth API is unversioned and undocumented, and list APIs lack pagination</strong>
+            <p><code>/auth/*</code> has no version prefix and no OpenAPI. It returns empty bodies, so the API does not describe its cookie contract. Collection endpoints have no pagination or filtering, and errors outside the advice fall back to Spring's default format.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="architecture-fitness-metrics">
+      <h2>Architecture Fitness Metrics</h2>
+      <div class="findings">
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>No automated architectural checks</strong>
+            <p>There are no ArchUnit or dependency rules, no API contract tests, and no check that the frontend's types match the backend's OpenAPI. CI runs only unit/slice tests, lint and build. Several findings in this review (layer leak, contract drift, dead configuration) could each become a one-line automated rule.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="common-anti-patterns">
+      <h2>Common Anti-Patterns</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">Strength</span>
+          <div class="finding-text">
+            <strong>Avoids the shared database, the distributed monolith and the shared-library trap</strong>
+            <p>No tables are shared, there are no synchronous call chains between services, there is no shared library, and each service deploys independently.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Lock-step change risk through the shared secret and duplicated enum</strong>
+            <p>Changing roles, claims, algorithm or key requires coordinated releases of both services. This is a narrow but real form of distributed-monolith coupling.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Mild leaky abstraction in responses</strong>
+            <p><code>TutorProfileResponse</code> and <code>SubjectResponse</code> mirror their entity columns one-to-one, including internal <code>userId</code> and audit timestamps. Any schema change therefore becomes an API change.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="testability">
+      <h2>Testability</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">Strength</span>
+          <div class="finding-text">
+            <strong>Injectable design with tests on both services</strong>
+            <p>Constructor injection is used throughout via <code>@RequiredArgsConstructor</code>, and the <code>CurrentUserProvider</code> seam keeps services testable. Each service has controller and service tests, and auth-service has a <code>JwtAuthenticationFilter</code> integration test.</p>
+          </div>
+        </div>
+        <div class="finding risk">
+          <span class="badge badge-risk">Risk</span>
+          <div class="finding-text">
+            <strong>Shipped schema is never tested</strong>
+            <p>Both <code>application-test.yaml</code> files run on H2 with <code>flyway.enabled: false</code> and <code>ddl-auto: create-drop</code>, so Hibernate generates its own schema in tests. The Flyway migrations and the production <code>ddl-auto: validate</code> check never run before deployment, and mismatches such as the <code>TIMESTAMP</code> vs <code>Instant</code> difference first appear at startup in the deployed environment.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>No cross-service or frontend tests; time is not controllable</strong>
+            <p>No test checks that a token issued by auth-service is accepted by the backend, which would have caught the transport mismatch. The frontend has no tests. <code>JwtService</code> and <code>RefreshTokenService</code> call <code>Instant.now()</code> directly instead of an injected <code>Clock</code>, so expiry cannot be tested deterministically.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="evolvability">
+      <h2>Evolvability</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">Strength</span>
+          <div class="finding-text">
+            <strong>Internals can change behind DTOs and a versioned path</strong>
+            <p>Mappers and records decouple the persistence model from the API, and the <code>/api/v1</code> prefix leaves room for <code>v2</code>.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Environment behaviour is hard-coded</strong>
+            <p>The cookie <code>Secure</code> flag, the CORS origin and the build-time API URL are compiled into code or bundles. Moving between the LAN, staging and a future public environment means code changes or rebuilds, not configuration.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>No extension point for roles or the tutor lifecycle</strong>
+            <p>Roles are enums fixed at registration, and no workflow exists for changing them. Adding onboarding (apply as a tutor, approval) or bookings later has no seam to attach to.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="architectural-smells-codebase-review-only-not-applicable-in-design-review">
+      <h2>Architectural Smells (codebase review only — not applicable in design review)</h2>
+      <div class="findings">
+        <div class="finding strength">
+          <span class="badge badge-strength">Strength</span>
+          <div class="finding-text">
+            <strong>No god services or smart UI</strong>
+            <p>The largest classes are under about 100 lines, and every service class has one feature's responsibilities.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Anemic domain model</strong>
+            <p>Entities are data holders. Rules such as name normalisation, slug generation and status checks live in services or are missing. The only behaviour method, <code>Subject.Deactivate()</code>, is unused and wrongly capitalised. This is acceptable at the current size, but rules like "a blocked user cannot log in" belong on the entity.</p>
+          </div>
+        </div>
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>Dead security configuration</strong>
+            <p><code>JwtAuthenticationConverterConfiguration</code> declares a converter method without <code>@Bean</code>, which duplicates the <code>JwtAuthenticationConverter</code> component actually in use. Readers cannot tell which converter applies.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== RECOMMENDED ============================== -->
+    <section id="recommended">
+      <h2>Recommended Architecture</h2>
+
+      <div class="card">
+        <p>No revised System Context diagram is included because the system boundary and its actors are sound. The changes below are inside and between the containers. The targets are recommendations for evolving from the current LAN/test setup; they are not requirements of it.</p>
+      </div>
+
+      <div class="diagram-card">
+        <h3>Recommended Component Diagram</h3>
+        <p class="diagram-desc">Changes: token issuance and transport move behind a port, auth-service publishes a JWKS endpoint and gains refresh/logout and role management, the backend resolves tokens from a cookie or a header and validates with JWKS, the frontend uses a generated, validated API client, and the dead converter config is removed.</p>
+        <div class="mermaid">
+graph LR
+  subgraph sg_fe2["mentorlink-frontend"]
+    FE2Pages["pages + auth UI"]
+    FE2Client["generated API client<br/>from OpenAPI + zod validation"]
+  end
+
+  subgraph sg_auth2["auth-service"]
+    A2Ctl["AuthController<br/>register, login, refresh, logout"]
+    A2Svc["AuthService<br/>returns TokenPair, no servlet types"]
+    A2Port["TokenDelivery port<br/>cookie adapter"]
+    A2Issuer["TokenIssuer<br/>RS256 or ES256, iss, aud, kid"]
+    A2Jwks["JWKS endpoint<br/>/.well-known/jwks.json"]
+    A2Refresh["RefreshTokenService<br/>rotation, reuse detection, cleanup"]
+    A2Roles["UserAdminController<br/>role and status changes"]
+    A2Seed["dev/test seed<br/>profile-gated"]
+  end
+
+  subgraph sg_be2["mentorlink-backend"]
+    B2Resolver["CookieOrHeaderBearerTokenResolver<br/>+ CSRF for cookie path"]
+    B2Sec["Resource server<br/>JWKS, iss and aud validated"]
+    B2Tutors["tutors<br/>profile with display-name snapshot"]
+    B2Subjects["subjects"]
+  end
+
+  FE2Pages --> FE2Client
+  FE2Client -->|/auth/*| A2Ctl
+  FE2Client -->|/api/v1/*| B2Resolver
+  A2Ctl --> A2Svc
+  A2Ctl --> A2Port
+  A2Svc --> A2Issuer
+  A2Svc --> A2Refresh
+  A2Issuer --> A2Jwks
+  B2Resolver --> B2Sec
+  B2Sec -->|fetch and cache public keys| A2Jwks
+  B2Sec --> B2Tutors
+  B2Sec --> B2Subjects
+        </div>
+      </div>
+
+      <div class="diagram-card">
+        <h3>Recommended Application Diagram</h3>
+        <p class="diagram-desc">Change: one TLS-terminated origin serves the pages, <code>/api/v1</code> and <code>/auth</code>. Cookies become first-party, CORS is no longer needed, and <code>NEXT_PUBLIC_API_URL</code> stays relative in every environment.</p>
+        <div class="mermaid">
+graph LR
+  Browser2["Browser"]
+  Proxy["Reverse proxy - Coolify or Traefik<br/>single origin, TLS"]
+  Next2["Next.js<br/>pages"]
+  Auth2["auth-service<br/>/auth/*"]
+  Backend2["mentorlink-backend<br/>/api/v1/*"]
+
+  Browser2 -->|HTTPS| Proxy
+  Proxy -->|pages| Next2
+  Proxy -->|/auth/*| Auth2
+  Proxy -->|/api/v1/*| Backend2
+  Backend2 -.->|JWKS, cached| Auth2
+        </div>
+      </div>
+
+      <div class="diagram-card">
+        <h3>Recommended Sequence — login, call, refresh</h3>
+        <p class="diagram-desc">Change: the cookie is first-party and accepted by the backend, with CSRF protection. Expiry is handled by a refresh with rotation instead of a hard logout.</p>
+        <div class="mermaid">
+sequenceDiagram
+  actor U as User
+  participant B as Browser
+  participant P as Reverse proxy
+  participant A as auth-service
+  participant R as backend resource server
+  participant T as TutorProfileController
+
+  U->>B: submit credentials
+  B->>P: POST /auth/login
+  P->>A: forward
+  A->>A: verify password and UserStatus ACTIVE
+  A-->>B: 204 + first-party access and refresh cookies + CSRF token
+  B->>P: POST /api/v1/tutors/profile with cookie and X-CSRF header
+  P->>R: forward
+  R->>R: resolve token from cookie, check CSRF, verify via cached JWKS, iss, aud
+  alt access token valid
+    R->>T: authenticated as TUTOR
+    T-->>B: 201 profile
+  else access token expired
+    R-->>B: 401
+    B->>P: POST /auth/refresh
+    P->>A: forward
+    A->>A: rotate refresh token, revoke old, detect reuse
+    A-->>B: 204 + new cookies
+    B->>P: retry original request
+  end
+        </div>
+      </div>
+
+      <div class="diagram-card">
+        <h3>Recommended Deployment Diagram</h3>
+        <p class="diagram-desc">Changes: one deployment definition that references CI image tags, only the proxy is exposed, every container has a healthcheck, each service has its own DB user, secrets have a single recorded source, backups exist, and deploys are verified after they run.</p>
+        <div class="mermaid">
+graph TB
+  subgraph sg_ci2["Forgejo"]
+    CI2["Per-service pipelines<br/>Testcontainers tests, contract tests"]
+    Reg2["Registry<br/>immutable sha tags"]
+  end
+  subgraph sg_host2["Coolify host"]
+    Coolify2["Coolify<br/>compose referencing image sha tags<br/>env from one secret source"]
+    Proxy2["Reverse proxy :443<br/>only exposed port"]
+    subgraph sg_net2["internal network"]
+      FE3["frontend<br/>healthcheck"]
+      BE3["backend<br/>healthcheck /actuator/health"]
+      AU3["auth-service<br/>healthcheck /actuator/health"]
+      PG3[("postgres<br/>auth_user, tutor_user")]
+    end
+    Backup[("scheduled pg_dump<br/>off-host copy")]
+  end
+
+  CI2 --> Reg2
+  CI2 -->|webhook + post-deploy smoke test| Coolify2
+  Coolify2 -->|pull sha tag| Reg2
+  Coolify2 --> sg_net2
+  Proxy2 --> FE3
+  Proxy2 --> BE3
+  Proxy2 --> AU3
+  BE3 --> PG3
+  AU3 --> PG3
+  PG3 --> Backup
+        </div>
+      </div>
+
+      <div class="diagram-card">
+        <h3>Recommended Data Architecture</h3>
+        <p class="diagram-desc">Changes: <code>refresh_tokens</code> uses <code>timestamptz</code> and records rotation. <code>tutor_profiles</code> stores a display-name snapshot taken from token claims at creation, so the catalogue can serve listings without reading <code>auth_db</code>.</p>
+        <div class="mermaid">
+erDiagram
+  USERS {
+    uuid id PK
+    varchar email UK
+    varchar password_hash
+    varchar first_name
+    varchar last_name
+    varchar role "changed only via admin API"
+    varchar status "checked at login"
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  REFRESH_TOKENS {
+    uuid id PK
+    uuid user_id FK
+    varchar token_hash UK
+    uuid family_id "rotation chain"
+    uuid replaced_by "set on rotation"
+    timestamptz expires_at
+    timestamptz revoked_at
+    timestamptz created_at
+  }
+  TUTOR_PROFILES {
+    uuid id PK
+    uuid user_id UK "identity reference, no cross-db FK"
+    varchar display_name "snapshot from token claims"
+    text bio
+    boolean active
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  SUBJECTS {
+    uuid id PK
+    varchar name UK "trimmed, normalised"
+    varchar slug UK
+    boolean active
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  USERS ||--o{ REFRESH_TOKENS : owns
+        </div>
+      </div>
+
+      <div class="card recommendations">
+        <ol>
+          <li><strong>Settle token transport, then fix it end to end.</strong> Fixes Security Risk 1 and the Separation of Concerns, Layered and Hexagonal findings. Recommended option: serve <code>/auth</code> and <code>/api/v1</code> from the frontend's origin, and give the backend a <code>BearerTokenResolver</code> that reads the <code>access_token</code> cookie (with the header as a fallback for tools) and turns CSRF protection back on for the cookie path. Move cookie writing out of <code>AuthService</code> into a delivery adapter. Record the choice in an ADR.</li>
+          <li><strong>Replace the shared HS256 secret with asymmetric keys and JWKS.</strong> Fixes the Security and Coupling risks. auth-service signs with RS256 or ES256 and a <code>kid</code>, and the backend uses <code>NimbusJwtDecoder.withJwkSetUri</code> and validates <code>iss</code> and <code>aud</code>. Rotation becomes "publish a new key, sign with it, retire the old key after the token TTL", and the backend can no longer mint tokens.</li>
+          <li><strong>Define the tutor read model and enforce the API contract.</strong> Fixes the Data, Domain and API risks. Add name claims to the access token and snapshot <code>display_name</code> into <code>tutor_profiles</code> at creation, or explicitly drop names from the UI. Generate the frontend client and types from springdoc's OpenAPI, validate responses with <code>zod</code>, and fail CI on drift.</li>
+          <li><strong>Complete the identity lifecycle.</strong> Covers the Security, Operability, Domain and Evolvability findings:
+            <ul style="margin: 0.3rem 0 0 1.1rem;">
+              <li>check <code>UserStatus</code> at login;</li>
+              <li>add <code>/auth/refresh</code> with rotation and reuse detection, and <code>/auth/logout</code>;</li>
+              <li>clean up expired refresh tokens on a schedule;</li>
+              <li>rate-limit login;</li>
+              <li>add an admin API for role and status changes;</li>
+              <li>turn auth-filter failures into 401s.</li>
+            </ul>
+          </li>
+          <li><strong>Add repeatable, environment-gated dev/test provisioning.</strong> Add a profile-gated <code>ApplicationRunner</code> or a separate Flyway location (for example <code>db/seed-dev</code>) that creates TUTOR and ADMIN test accounts from environment-supplied credentials, so recreating the database restores them. Keep it disabled in any production profile.</li>
+          <li><strong>Raise test fidelity and add fitness functions.</strong> Covers the Testability and Fitness Metrics findings:
+            <ul style="margin: 0.3rem 0 0 1.1rem;">
+              <li>run tests against Postgres via Testcontainers with Flyway on and <code>ddl-auto: validate</code>;</li>
+              <li>add one cross-service test that issues a token in auth-service and has the backend accept it;</li>
+              <li>inject a <code>Clock</code>;</li>
+              <li>add ArchUnit rules (no <code>jakarta.servlet</code> in <code>..service..</code>, no entities in controllers);</li>
+              <li>add frontend type and contract checks.</li>
+            </ul>
+          </li>
+          <li><strong>Make the deployment one explicit definition.</strong> Covers the Deployment Architecture, Security network and Reliability findings:
+            <ul style="margin: 0.3rem 0 0 1.1rem;">
+              <li>point <code>docker-compose.coolify.yml</code> at the CI image SHA tags, or delete it if Coolify uses separate image resources;</li>
+              <li>keep <code>NEXT_PUBLIC_API_URL</code> relative;</li>
+              <li>make <code>BACKEND_INTERNAL_URL</code> a true runtime setting or document that it needs a rebuild;</li>
+              <li>expose only the proxy port with TLS;</li>
+              <li>add container healthchecks;</li>
+              <li>add a post-deploy smoke test;</li>
+              <li>stop running tests a second time in the Dockerfile.</li>
+            </ul>
+          </li>
+          <li><strong>Give secrets and databases clear ownership.</strong> Covers the Security and Operability findings. Create a separate database user per service with access only to its own database, commit a <code>.env.example</code> that lists variable names only, record the single source of truth for each secret, and document the rotation procedure.</li>
+          <li><strong>Add baseline observability.</strong> Covers the Observability findings. Add structured logs with a request ID for authentication events, authorization denials and unhandled errors (never passwords or tokens), a catch-all advice that keeps the <code>ApiError</code> shape, a mapping from <code>DataIntegrityViolationException</code> to 409, and a Prometheus metrics endpoint.</li>
+          <li><strong>Clean up the data and the code.</strong> Covers the Data Architecture and Smells findings. Migrate <code>refresh_tokens</code> to <code>timestamptz</code>, fix subject name trimming and slug generation, add pagination before list sizes grow, remove <code>JwtAuthenticationConverterConfiguration</code> and the unused <code>Subject.Deactivate()</code>, and handle errors in <code>FeaturedTutorsSection</code>.</li>
+          <li><strong>Start ADRs and keep the README in step with the code.</strong> Covers the Governance findings. The first ADRs should cover token transport, signing keys, tutor data ownership and the deployment definition.</li>
+          <li><strong>Preserve these strengths:</strong> database-per-service, no synchronous calls between services, stateless services, the <code>CurrentUserProvider</code> port, the mapper and DTO layering, one shared error body, and independent per-service pipelines.</li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <h3>Migration Notes</h3>
+        <p><strong>1. Make change safe first.</strong> Do recommendation 6 before anything else: Testcontainers with Flyway, the cross-service token test, and the frontend contract check. Every later step changes a contract, and today none of those contracts is tested.</p>
+        <p><strong>2. Unblock the core flow.</strong> Next, do recommendation 1 (single origin, cookie resolver plus CSRF) together with the <code>UserStatus</code> check and the profile-gated seed (recommendation 5). At that point a tutor can log in and create a profile from the web app. Then fix the tutor read model (recommendation 3) so listing tutors stops crashing.</p>
+        <p><strong>3. Harden identity.</strong> Then add refresh and logout, rotation, rate limiting and the admin role API (recommendation 4). After that, migrate to JWKS (recommendation 2). JWKS is easiest to land once tokens are already refreshable: deploy auth-service publishing both keys, switch the backend to JWKS, start signing with the new key, and remove <code>JWT_SECRET</code> once the old tokens have expired.</p>
+        <p><strong>4. Operational foundation.</strong> Recommendations 7–9 can run in parallel with the steps above. Each is local to one file or configuration area and carries little risk on a LAN deployment. Recommendations 10–11 are ongoing hygiene.</p>
+        <p>Everything here assumes the current LAN/test environment. Before any public exposure, steps 1–3, TLS, per-service database users and backups are prerequisites.</p>
+      </div>
+    </section>
+
+  </main>
+</body>
+</html>

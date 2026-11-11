@@ -1,0 +1,522 @@
+# HTML Report Template
+
+Use this to produce the architecture review HTML output. Replace all `{PLACEHOLDER}` values with actual content.
+
+## Section structure
+
+**For `architect-design-review`:**
+- Executive Summary
+- Architecture Diagrams
+- Dynamic criteria sections generated from applicable reviewable sections in `architecture-principles.md`
+- Recommendations
+
+**For `architect-codebase-review`:**
+- Current Architecture (diagrams + narrative)
+- Dynamic criteria sections generated from applicable reviewable sections in `architecture-principles.md`
+- Recommended Architecture (revised diagrams + migration notes)
+
+## Full HTML template
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Architecture Review — {PROJECT_NAME}</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: #f5f5f7;
+      color: #1d1d1f;
+      line-height: 1.6;
+      display: flex;
+      min-height: 100vh;
+      min-width: 0;
+    }
+
+    nav {
+      width: 220px;
+      flex-shrink: 0;
+      background: #fff;
+      border-right: 1px solid #e5e5ea;
+      padding: 2rem 1.25rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    nav h2 {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #8e8e93;
+      margin-bottom: 1rem;
+    }
+
+    nav a {
+      display: block;
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      color: #3a3a3c;
+      text-decoration: none;
+      font-size: 0.875rem;
+      margin-bottom: 0.25rem;
+      transition: background 0.15s;
+    }
+
+    nav a:hover { background: #f2f2f7; }
+
+    main {
+      flex: 1 1 0;
+      min-width: 0;
+      padding: 2.5rem 3rem;
+      max-width: 1600px;
+    }
+
+    header {
+      margin-bottom: 2.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid #e5e5ea;
+    }
+
+    header h1 { font-size: 1.75rem; font-weight: 700; }
+    header p { margin-top: 0.5rem; color: #6e6e73; font-size: 0.95rem; }
+    header .meta { margin-top: 0.75rem; font-size: 0.8rem; color: #8e8e93; }
+
+    section { margin-bottom: 3rem; scroll-margin-top: 2rem; }
+
+    section h2 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #e5e5ea;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e5e5ea;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+
+    .card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; }
+    .card p { color: #3a3a3c; font-size: 0.9rem; overflow-wrap: break-word; word-break: break-word; }
+
+    .diagram-card {
+      background: #fff;
+      border: 1px solid #e5e5ea;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      overflow-x: auto;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      min-width: 0;
+    }
+
+    .diagram-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.4rem; }
+    .diagram-desc { color: #6e6e73; font-size: 0.85rem; margin-bottom: 1rem; }
+    .mermaid {
+      min-height: 80px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .findings { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .finding {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+      padding: 0.875rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      min-width: 0;
+    }
+
+    .finding.strength { background: #f0faf4; border-left: 3px solid #30d158; }
+    .finding.concern  { background: #fffbf0; border-left: 3px solid #ff9f0a; }
+    .finding.risk     { background: #fff5f5; border-left: 3px solid #ff3b30; }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .finding-text {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+
+    .badge-strength { background: #30d158; color: #fff; }
+    .badge-concern  { background: #ff9f0a; color: #fff; }
+    .badge-risk     { background: #ff3b30; color: #fff; }
+
+    .finding-text strong { display: block; margin-bottom: 0.2rem; overflow-wrap: break-word; word-break: break-word; }
+    .finding-text p { color: #3a3a3c; overflow-wrap: break-word; word-break: break-word; }
+    .finding-text * { overflow-wrap: break-word; word-break: break-word; }
+
+    .recommendations ol { padding-left: 1.5rem; }
+    .recommendations li { margin-bottom: 0.75rem; color: #3a3a3c; font-size: 0.9rem; overflow-wrap: break-word; word-break: break-word; }
+    .recommendations li strong { color: #1d1d1f; }
+
+    @media (max-width: 600px) {
+      body {
+        flex-direction: column;
+      }
+
+      nav {
+        width: 100%;
+        min-width: 100%;
+        height: auto;
+        max-height: 30vh;
+        position: relative;
+        border-right: none;
+        border-bottom: 1px solid #e5e5ea;
+        overflow-x: auto;
+      }
+
+      nav a {
+        display: inline-block;
+        margin-bottom: 0;
+        margin-right: 0.25rem;
+      }
+
+      main {
+        padding: 1.5rem 1.25rem;
+        max-width: 100%;
+      }
+
+      .diagram-card { margin-left: -1.25rem; margin-right: -1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <h2>Architecture Review</h2>
+    <!-- Design review nav: -->
+    <a href="#summary">Executive Summary</a>
+    <a href="#diagrams">Diagrams</a>
+    <!-- Add one dynamic criteria link per evaluated review section:
+    <a href="#{generated-anchor}">{Section heading}</a>
+    -->
+    <a href="#recommendations">Recommendations</a>
+
+    <!-- Codebase review nav (replace above with this):
+    <a href="#current">Current Architecture</a>
+    Add one dynamic criteria link per evaluated review section:
+    <a href="#{generated-anchor}">{Section heading}</a>
+    <a href="#recommended">Recommended Architecture</a>
+    -->
+  </nav>
+
+  <main>
+    <header>
+      <h1>{PROJECT_NAME} Architecture Review</h1>
+      <p>{ONE_LINE_PROJECT_DESCRIPTION}</p>
+      <p class="meta">Generated {YYYY-MM-DD} · {Design Review | Codebase Review}</p>
+    </header>
+
+    <!-- ============================================================
+         DESIGN REVIEW SECTIONS
+         ============================================================ -->
+
+    <section id="summary">
+      <h2>Executive Summary</h2>
+      <div class="card">
+        <p>{2-3 sentences: what the system is, key architectural decisions, overall assessment}</p>
+      </div>
+    </section>
+
+    <section id="diagrams">
+      <h2>Architecture Diagrams</h2>
+
+      <div class="diagram-card">
+        <h3>System Context</h3>
+        <p class="diagram-desc">{One sentence: what this diagram shows}</p>
+        <div class="mermaid">
+graph TB
+  User(["{Actor}"])  --> Sys["{System Name}"]
+  Sys --> DB[("Database")]
+  Sys --> Ext["{External Service}"]
+        </div>
+      </div>
+
+      <div class="diagram-card">
+        <h3>Component Diagram</h3>
+        <p class="diagram-desc">{One sentence: what this diagram shows}</p>
+        <div class="mermaid">
+graph LR
+  subgraph "{System Name}"
+    A["{Component A}"] --> B["{Component B}"]
+    B --> C["{Component C}"]
+  end
+        </div>
+      </div>
+
+      <!-- Add additional diagram-card blocks for confirmed extras -->
+
+    </section>
+
+    <!-- Repeat once per evaluated review section from architecture-principles.md -->
+    <section id="{generated-anchor}">
+      <h2>{Section heading}</h2>
+      <div class="findings">
+
+        <div class="finding strength">
+          <span class="badge badge-strength">Strength</span>
+          <div class="finding-text">
+            <strong>{Principle or area}</strong>
+            <p>{Why this is a strength}</p>
+          </div>
+        </div>
+
+        <div class="finding concern">
+          <span class="badge badge-concern">Concern</span>
+          <div class="finding-text">
+            <strong>{Principle or area}</strong>
+            <p>{What the concern is}</p>
+          </div>
+        </div>
+
+        <div class="finding risk">
+          <span class="badge badge-risk">Risk</span>
+          <div class="finding-text">
+            <strong>{Principle or area}</strong>
+            <p>{What the risk is and why it matters}</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="recommendations" class="recommendations">
+      <h2>Recommendations</h2>
+      <div class="card">
+        <ol>
+          <li><strong>{Recommendation title}</strong> — {Actionable explanation}</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         CODEBASE REVIEW SECTIONS (replace design review sections)
+         ============================================================
+
+    <section id="current">
+      <h2>Current Architecture</h2>
+      [diagram-card blocks for current-state diagrams]
+      <div class="card">
+        <p>{Narrative describing the current architecture}</p>
+      </div>
+    </section>
+
+    <!-- Dynamic criteria sections: one per evaluated review section from architecture-principles.md -->
+    <!-- Each section follows the generic dynamic criteria template shown in the design review section above -->
+
+    <section id="recommended">
+      <h2>Recommended Architecture</h2>
+      [diagram-card blocks for revised diagrams]
+      <div class="card recommendations">
+        <ol>
+          <li><strong>{Change}</strong> — {Why and how}</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h3>Migration Notes</h3>
+        <p>{How to get from current to recommended, what to do first}</p>
+      </div>
+    </section>
+
+    -->
+
+  </main>
+</body>
+</html>
+```
+
+## Finding block structure
+
+Every finding must follow this exact structure for the CSS to work:
+
+```html
+<div class="finding concern">
+  <span class="badge badge-concern">{Badge label}</span>
+  <div class="finding-text">
+    <strong>{Title}</strong>
+    <p>{Description text. Long lines wrap automatically. PoisonError and similar long identifiers wrap without overflow. URLs like https://example.com/path/to/resource also wrap properly. All text wraps at the container boundary.}</p>
+  </div>
+</div>
+```
+
+**Critical rules for finding blocks:**
+1. **Badge span must close with `</span>`, NOT `</strong>`** — the badge is a `<span>` element
+2. **Title must be wrapped in `<strong>` inside a `.finding-text` div** — the CSS targets `.finding-text strong`
+3. **Description must be in `<p>` inside `.finding-text`** — the CSS targets `.finding-text p`
+4. **Never put text content directly between `<span class="badge">` and `</strong>`** — this is a common error that breaks the entire flex layout
+
+## Mermaid diagram syntax reference
+
+All diagrams use `<div class="mermaid">` blocks. Common types:
+
+### ⚠️ Critical: Avoid parentheses in [("...")] and ("...") node labels
+
+Parentheses `(` `)` inside labels of **cylinder** `[("...")]` or **rounded** `("...")` nodes will break Mermaid parsing. These shapes use `(` and `)` as delimiters — so inner parens confuse the parser.
+
+```
+❌ AVS --> DB[("pgvector\n(PostgreSQL extension)")]       # broken!
+❌ AVS --> DB("pgvector\n(PostgreSQL extension)")          # broken!
+✅ AVS --> DB[("pgvector\nPostgreSQL extension")]          # remove parens
+✅ AVS --> DB["pgvector\n(PostgreSQL extension)"]          # or use ["..."] rectangle shape
+```
+
+### ⚠️ Also: Special characters in bare [text] nodes need quoting
+
+Bare `[text]` node labels (no quotes around the text) cannot contain special characters: `(` `)` `/` `{` `}` `[` `]` `|` `&` `#` `<` `>`. When a label uses any of these, wrap it in double quotes: `["text"]`.
+
+```
+❌ OpenAI[OpenAI API\n(chat/completions)]                     # bare, has ( )
+❌ Slack[Slack\n(Bolt / WebSocket)]                          # bare, has ( ) /
+✅ OpenAI["OpenAI API\n(chat/completions)"]                   # quoted
+✅ Slack["Slack\n(Bolt / WebSocket)"]                          # quoted
+✅ SimpleNode[Just plain text]                                 # bare, no special chars — OK
+```
+
+This also applies to cylinder nodes: prefer `[("text")]` over `[(text)]` when the text contains `+`, `/`, or other special chars.
+
+**When in doubt, always use `["..."]` for node labels.**
+
+### ⚠️ Never use double quotes inside edge-labels — use single quotes
+
+Mermaid treats `"` inside edge labels as the label terminator, so `|-` |emit "file-changed"|- breaks with a parse error. Always use **single quotes** for strings inside edge labels:
+
+```
+❌ Watcher -.->|emit "file-changed"| Preview
+✅ Watcher -.->|emit 'file-changed'| Preview
+❌ A -->|"POST /api/users"| B
+✅ A -->|'POST /api/users'| B
+❌ A -->|"User clicks button"| B
+✅ A -->|'User clicks button'| B
+```
+
+**Rule of thumb:** if an edge label (`|...|`) contains text with apostrophes or natural language, always use single quotes. If the text itself contains single quotes, use double quotes but escape inner ones — or rephrase to avoid them. For most technical labels (event names, HTTP methods, etc.), single quotes are the right default.
+
+### ⚠️ Subgraph IDs must not collide with node IDs
+
+Mermaid can get confused when a subgraph ID matches a node ID. Example:
+
+```
+❌ subgraph avs-core["avs-core (Foundation)"]
+     Agent[Agent]
+   end
+   avs-react --> avs-core   # avs-core is BOTH a subgraph and creates a node!
+
+✅ subgraph sg-avs-core["avs-core (Foundation)"]   # prefix avoids collision
+     Agent[Agent]
+   end
+   avs-react --> avs-core   # avs-core is now only a node ID
+```
+
+**Always use distinct prefixes for subgraph IDs** (e.g., `sg-`, `sub-`) to avoid collisions.
+
+**Class diagram** (types, interfaces, relationships):
+```
+classDiagram
+    class MyClass {
+        +field: String
+        +method() ReturnType
+    }
+    class MyEnum {
+        Value1
+        Value2
+    }
+    class MyInterface {
+        +method() void
+    }
+    MyClass --> MyEnum : uses
+
+    %% CRITICAL: For <<enumeration>> and <<interface>> annotations,
+    %% do NOT put << >> inside class bodies. Mermaid v11 parses >> as HTML
+    %% closing tags and breaks. Use classDef at the bottom instead:
+    classDef enum fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    classDef iface fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+    class MyEnum enum
+    class MyInterface iface
+```
+
+**Flowchart** (system context, application, integration):
+```
+graph TB
+  Actor([Actor]) --> System[System]
+  System --> DB[(Database)]
+  System --> Ext[External API]
+```
+
+**Component** (internal structure):
+```
+graph LR
+  subgraph System
+    A[Module A] --> B[Module B]
+  end
+```
+
+**Sequence**:
+```
+sequenceDiagram
+  actor User
+  User->>API: POST /login
+  API->>Auth: validate(credentials)
+  Auth-->>API: token
+  API-->>User: 200 {token}
+```
+
+**ER diagram** (data architecture):
+```
+erDiagram
+  USER {
+    uuid id PK
+    varchar email
+    varchar status
+  }
+  ORDER {
+    uuid id PK
+    uuid user_id FK
+    varchar status
+  }
+  USER ||--o{ ORDER : places
+  ORDER ||--|{ ITEM : contains
+```
+
+**ER diagram rules (Mermaid 10.x):**
+- Attribute key constraints: `PK`, `FK`, or `UK` only — never `PK_FK` or combined forms
+- For a field that is both PK and FK (e.g. a 1-to-1 join table key), use `PK`; the FK relationship is implied by the relationship line
+- Attribute types must be word characters only (`varchar`, `uuid`, `text`, `boolean`, `timestamptz`) — do not use `enum` as a type; use `varchar` instead
+- Quoted comments after the key constraint are optional; use **double quotes only** — single quotes are a syntax error in Mermaid 10 erDiagram (e.g. `"secretary or admin"` not `'secretary or admin'`)
+- Avoid `|` inside comments as it will break parsing — use ` or ` instead (e.g. `"secretary or admin"` not `"secretary|admin"`)
+- Only mark a field `UK` if it truly has a database unique constraint — do not use it to document allowed values (e.g. a `role` column that allows multiple rows per value must not be `UK`)
+
+**Deployment**:
+```
+graph TB
+  subgraph Cloud
+    LB[Load Balancer] --> App1[App Instance]
+    LB --> App2[App Instance]
+    App1 & App2 --> DB[(RDS)]
+  end
+```
